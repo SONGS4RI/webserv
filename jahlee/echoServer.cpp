@@ -39,7 +39,7 @@ int main() {
 		exit_with_perror("socket() eroror: " + string(strerror(errno)));
 	}
 	memset(&server_addr, 0, sizeof(server_addr));
-	server_addr.sin_family = AF_INET;
+	server_addr.sin_family = AF_INET;// TCP, UDP 설정
 	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);// 모든 ip접근 허가
 	server_addr.sin_port = htons(8080);// 포트 설정
 
@@ -86,7 +86,7 @@ int main() {
 					cerr << "client socket error" << endl;
 					disconnect_client(cur_event->ident, clients);
 				}
-			} else if (cur_event->filter == EVFILT_READ) {
+			} else if (cur_event->filter == EVFILT_READ) {// 읽기
 				if (cur_event->ident == server_socket) {
 					/* 새로운 클라이언트 승인 */
 					int client_socket = accept(server_socket, NULL, NULL);
@@ -101,10 +101,37 @@ int main() {
                     change_events(change_list, client_socket, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
                     clients[client_socket] = "";
 				} else if (clients.find(cur_event->ident) != clients.end()) {
+					/* 클라이언트 데이터 읽어오기 */
+					char buf[1024];
+					int n = read(cur_event->ident, buf, sizeof(buf));
 
+					if (n <= 0) {
+						if (n < 0) {
+							cerr << "client read error!" << endl;
+						}
+						disconnect_client(cur_event->ident, clients);
+					} else {
+						buf[n] = '\0';
+						clients[cur_event->ident] += buf;
+						cout << "received data from " << cur_event->ident << ": " << clients[cur_event->ident] << endl;
+					}
+				}
+			} else if(cur_event->filter == EVFILT_WRITE) {
+				/* 클라이언트에게 데이터 송신 */
+				map<int, string>::iterator iter = clients.find(cur_event->ident);
+				if (iter != clients.end()) {
+					if (clients[cur_event->ident] != "") {
+						int n = write(cur_event->ident, clients[cur_event->ident].c_str(), clients[cur_event->ident].size());
+						if (n == -1) {
+							cerr << "client write error!" << "\n";
+							disconnect_client(cur_event->ident, clients);
+						} else {
+							clients[cur_event->ident].clear();
+						}
+					}
 				}
 			}
 		}
 	}
-
+	return 0;
 }
