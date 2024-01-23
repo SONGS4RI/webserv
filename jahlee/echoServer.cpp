@@ -78,6 +78,7 @@ int main(int argc, char** argv) {
 			exit_with_perror("kevent() eroror: " + string(strerror(errno)));
 		}
 		change_list.clear();
+		cout << "감지된 이벤트 개수: " << new_events << "\n";
 		for (int i=0; i<new_events; i++) {
 			cur_event = &event_list[i];
 
@@ -130,10 +131,13 @@ int main(int argc, char** argv) {
 							cout << "server echoed to:" << cur_event->ident << ", message: " << cur_client->second << endl;
 							cur_client->second.clear();
 						}
+					} else {
+						cout << cur_event->ident << "에게 보낼 데이터가 없습니다." << endl;
 					}
 				}
 			}
 		}
+		sleep(1);
 	}
 	return 0;
 }
