@@ -20,7 +20,7 @@ void exit_with_perror(const string& msg) {
 void change_events(vector<struct kevent>& change_list, uintptr_t ident, int16_t filter,
 					uint16_t flags, uint32_t fflags, intptr_t data, void* udata) {
 	struct kevent tmp_event;
-	EV_SET(&tmp_event, ident, filter, flags, fflags, data, udata);
+	EV_SET(&tmp_event, ident, filter, flags, fflags, data, udata);// kevent 구조체 초기화 매크로
 	change_list.push_back(tmp_event);
 }
 
@@ -30,9 +30,12 @@ void disconnect_client(int client_fd, map<int, string>& clients) {
 	clients.erase(client_fd);
 }
 
-int main() {
+int main(int argc, char** argv) {
+	if (argc != 2) {
+		exit_with_perror(string(argv[0]) + " [PORT]");
+	}
 	/* 서버 소켓 초기화 & listen */
-	int server_socket = socket(PF_INET, SOCK_STREAM, 0);
+	int server_socket = socket(PF_INET, SOCK_STREAM, 0);// 서버 소켓 IPv4, TCP, 0
 	struct sockaddr_in server_addr;
 
 	if (server_socket == -1) {
@@ -41,7 +44,7 @@ int main() {
 	memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;// TCP, UDP 설정
 	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);// 모든 ip접근 허가
-	server_addr.sin_port = htons(8080);// 포트 설정
+	server_addr.sin_port = htons(atoi(argv[1]));// 포트 설정
 
 	if (bind(server_socket, reinterpret_cast<struct sockaddr*>(&server_addr), sizeof(server_addr)) == -1 ) {
 		exit_with_perror("bind() eroror: " + string(strerror(errno)));
@@ -50,7 +53,7 @@ int main() {
 	if (listen(server_socket, 5) == -1) {
 		exit_with_perror("listen() eroror: " + string(strerror(errno)));
 	}
-	fcntl(server_socket, F_SETFL, O_NONBLOCK);
+	fcntl(server_socket, F_SETFL, O_NONBLOCK);// 소켓 플레그를 논블로킹으로 설정
 
 	/* kqueue 초기화*/
 	int kq = kqueue();
@@ -70,7 +73,7 @@ int main() {
 	int new_events;
 	struct kevent* cur_event;
 	while (1) {
-		new_events = kevent(kq, &change_list[0], change_list.size(), event_list, 8, NULL);
+		new_events = kevent(kq, &change_list[0], change_list.size(), event_list, 8, NULL);// change_list안의 값들은 kqueue에 등록된다.
 		if (new_events == -1) {
 			exit_with_perror("kevent() eroror: " + string(strerror(errno)));
 		}
@@ -79,13 +82,12 @@ int main() {
 			cur_event = &event_list[i];
 
 			/* 에러 이벤트 체크 */
-			if (cur_event->flags & EV_ERROR) {
+			if (cur_event->flags & EV_ERROR) {// 에러
 				if (cur_event->ident == server_socket) {
 					exit_with_perror("server socket eroror: " + string(strerror(errno)));
-				} else {
-					cerr << "client socket error" << endl;
-					disconnect_client(cur_event->ident, clients);
 				}
+				cerr << "client socket error" << endl;
+				disconnect_client(cur_event->ident, clients);
 			} else if (cur_event->filter == EVFILT_READ) {// 읽기
 				if (cur_event->ident == server_socket) {
 					/* 새로운 클라이언트 승인 */
@@ -95,8 +97,7 @@ int main() {
 					}
 					cout << "accept new client: " << client_socket << endl;
 					fcntl(client_socket, F_SETFL, O_NONBLOCK);
-
-					/* 클라 소켓 이벤트 추가 - 쓰기 읽기 이벤트 추가 */
+					/* 클라 소켓 이벤트 추가 - 쓰기, 읽기 이벤트 추가 */
 					change_events(change_list, client_socket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
                     change_events(change_list, client_socket, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
                     clients[client_socket] = "";
@@ -116,17 +117,18 @@ int main() {
 						cout << "received data from " << cur_event->ident << ": " << clients[cur_event->ident] << endl;
 					}
 				}
-			} else if(cur_event->filter == EVFILT_WRITE) {
+			} else if(cur_event->filter == EVFILT_WRITE) { // 쓰기
 				/* 클라이언트에게 데이터 송신 */
-				map<int, string>::iterator iter = clients.find(cur_event->ident);
-				if (iter != clients.end()) {
-					if (clients[cur_event->ident] != "") {
-						int n = write(cur_event->ident, clients[cur_event->ident].c_str(), clients[cur_event->ident].size());
+				map<int, string>::iterator cur_client = clients.find(cur_event->ident);
+				if (cur_client != clients.end()) {
+					if (clients[cur_event->ident] != "") {// map에 클라이언트 데이터가 있다면
+						int n = write(cur_event->ident, cur_client->second.c_str(), cur_client->second.size());
 						if (n == -1) {
 							cerr << "client write error!" << "\n";
 							disconnect_client(cur_event->ident, clients);
 						} else {
-							clients[cur_event->ident].clear();
+							cout << "server echoed to:" << cur_event->ident << ", message: " << cur_client->second << endl;
+							cur_client->second.clear();
 						}
 					}
 				}
