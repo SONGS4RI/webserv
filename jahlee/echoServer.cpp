@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
 	if (listen(server_socket, 5) == -1) {
 		exit_with_perror("listen() eroror: " + string(strerror(errno)));
 	}
-	fcntl(server_socket, F_SETFL, O_NONBLOCK);// 소켓 플레그를 논블로킹으로 설정
+	fcntl(server_socket, F_SETFL, O_NONBLOCK, FD_CLOEXEC);// 소켓 플레그를 논블로킹으로 설정
 
 	/* kqueue 초기화*/
 	int kq = kqueue();
@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
 						exit_with_perror("accept() eroror: " + string(strerror(errno)));
 					}
 					cout << "accept new client: " << client_socket << endl;
-					fcntl(client_socket, F_SETFL, O_NONBLOCK);
+					fcntl(client_socket, F_SETFL, O_NONBLOCK, FD_CLOEXEC);
 					/* 클라 소켓 이벤트 추가 - 쓰기, 읽기 이벤트 추가 */
 					change_events(change_list, client_socket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
                     change_events(change_list, client_socket, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
