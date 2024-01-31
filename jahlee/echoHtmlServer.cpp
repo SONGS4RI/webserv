@@ -9,6 +9,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <cstdio>
 
 using namespace std;
 
@@ -57,5 +58,6 @@ int main(int argc, char** argv) {
 	write(client_socket, response_header.c_str(), response_header.size());
 	
 	close(client_socket);
+	remove("test.txt");
 	return 0;
 }

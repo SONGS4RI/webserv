@@ -115,7 +115,7 @@ int main(int argc, char** argv) {
 					} else {
 						buf[n] = '\0';
 						clients[cur_event->ident] += buf;
-						cout << "received data from " << cur_event->ident << ": " << clients[cur_event->ident] << endl;
+						cout << "received data from " << cur_event->ident << endl;
 					}
 				}
 			} else if(cur_event->filter == EVFILT_WRITE) { // 쓰기
@@ -123,12 +123,14 @@ int main(int argc, char** argv) {
 				map<int, string>::iterator cur_client = clients.find(cur_event->ident);
 				if (cur_client != clients.end()) {
 					if (clients[cur_event->ident] != "") {// map에 클라이언트 데이터가 있다면
-						int n = write(cur_event->ident, cur_client->second.c_str(), cur_client->second.size());
+						// int n = write(cur_event->ident, cur_client->second.c_str(), cur_client->second.size());
+						string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 7\r\n\r\nHello!!";
+						int n = write(cur_event->ident, response.c_str(), response.size());
 						if (n == -1) {
 							cerr << "client write error!" << "\n";
 							disconnect_client(cur_event->ident, clients);
 						} else {
-							cout << "server echoed to:" << cur_event->ident << ", message: " << cur_client->second << endl;
+							cout << "server echoed to:" << cur_event->ident << endl;
 							cur_client->second.clear();
 						}
 					} else {
