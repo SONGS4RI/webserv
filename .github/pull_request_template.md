@@ -1,4 +1,7 @@
 <!--
+  :sparkles: [Feature] 제목
+  :hammer: [Refactoring] 제목
+  :bug: [Fix] 제목
   PR 작성 가이드
   1. 겸손한 어조를 사용하여 상대방이 기분나쁘지 않도록 노력할 것.
   2. 명확하게 질문하고 명확하게 답변할 것.
