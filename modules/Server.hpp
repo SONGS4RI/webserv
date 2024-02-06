@@ -1,7 +1,9 @@
 #pragma once
 
 #include <queue>
-#include <Config.hpp>
+
+#include "Config.hpp"
+
 class Server {
 	private:
 		Config serverConfig;
