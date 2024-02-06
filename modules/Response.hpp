@@ -1,14 +1,16 @@
 #pragma once
 
-enum EStatus {
+enum EResponseStatus {
 	WAIT,
 	PROGRESS,
 	DONE
 };
 
 class Response {
+	
+
 	private:
-		EStatus status;
+		EResponseStatus status;
 	public:
 		Response(/* args */);
 		~Response();

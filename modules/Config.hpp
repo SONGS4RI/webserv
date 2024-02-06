@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#define BUF_SIZE 1024
+
 using namespace std;
 
 class Config {
