@@ -20,17 +20,20 @@ class Request {
 		string leftOverBuffer;
 		unordered_map<string, string> properties;
 		char buf[BUF_SIZE];
+		int readenContentLength;
 	public:
-		Request(/* args */);
+		Request(const string& leftOverBuffer);
 		// Request& operator=(const Request& ref);
 		~Request();
 
 		void parseRequest(Client& client);
-		void parseStartLine();
+		void parseStartLine(const istringstream& iss);
 		void parseHeader();
 		void parseDefaultBody();
 		void parseChunkedBody();
 		void parseBinaryBody();// cgi
 
+		bool checkCRLF(const istringstream& iss);
+		void readRestHttpMessage(istringstream& iss);
 		void handleParsedRequest();
 };
