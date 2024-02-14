@@ -1,2 +1,8 @@
 *.out
 settings.json
+*.DS_Store
+functions.txt
+main.cpp
+Makefile
+.vscode*
+.gitmessage.txt
