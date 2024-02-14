@@ -35,9 +35,9 @@ void EventManager::handleEvent(const int& eventIdx) {
 			// sm->clients.push_back(Client());
 		} else /* 이미 연결된 클라이언트 */ {
 			Client client = sm->getClient(cur_event->ident);
-			/*
-				클라이언트의 처리 상태에 따라 이벤트 처리
-			*/
+			// 클라이언트의 처리 상태에 따라 이벤트 처리
+			Request* request = client.getCurReqeust();
+			request->parseRequest(client);
 		}
 	} else if (cur_event->flags ==  EVFILT_WRITE) {// 쓰기
 		/*

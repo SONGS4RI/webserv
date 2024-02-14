@@ -1,6 +1,12 @@
 #pragma once
 
-enum EStatus {
+#include <string>
+#include <vector>
+#include <map>
+#include "Config.hpp"
+#include "Client.hpp"
+
+enum ERequestStatus {
 	START_LINE,
 	HEADER,
 	BODY,
@@ -8,18 +14,23 @@ enum EStatus {
 	ERROR
 };
 
-enum EType {
-	DEFAULT,
-	CHUNKED,
-	BINARY
-};
-
 class Request {
 	private:
-		EStatus status;
-		EType bodyType;
+		ERequestStatus status;
+		string leftOverBuffer;
+		unordered_map<string, string> properties;
+		char buf[BUF_SIZE];
 	public:
 		Request(/* args */);
+		// Request& operator=(const Request& ref);
 		~Request();
 
+		void parseRequest(Client& client);
+		void parseStartLine();
+		void parseHeader();
+		void parseDefaultBody();
+		void parseChunkedBody();
+		void parseBinaryBody();// cgi
+
+		void handleParsedRequest();
 };

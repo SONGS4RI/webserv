@@ -32,7 +32,6 @@ int main(int argc, char** argv) {
 		delete em;
 		return (1);
 	}
-	// 싱글톤 객체들 삭제
 	delete sm;
 	delete em;
 	return (0);
