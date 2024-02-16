@@ -1,4 +1,6 @@
 #pragma once
+#ifndef SERVER_HPP
+#define SERVER_HPP
 
 #include <queue>
 
@@ -15,3 +17,5 @@ class Server {
 
 		const int& getSocketFd() const;
 };
+
+#endif

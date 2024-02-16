@@ -1,4 +1,6 @@
 #pragma once
+#ifndef SOCKETMANAGER_HPP
+#define SOCKETMANAGER_HPP
 
 #include <vector>
 #include <map>
@@ -24,3 +26,5 @@ class SocketManager {
 		void disconnect_client(const int& clientIdent);
 		Client& getClient(const int& clientIdent);
 };
+
+#endif

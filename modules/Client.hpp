@@ -1,4 +1,6 @@
 #pragma once
+#ifndef CLIENT_HPP
+#define CLIENT_HPP
 
 #include <queue>
 
@@ -16,8 +18,8 @@ class Client {
 
 		Request* getCurReqeust();
 		Response* getCurResponse();
-		Request* addRequest(Request* request);
 		void addResponse(Response* response);
 		const int& getSocketFd();
-		void deleteParsedRequest();// 동적할당 해제
 };
+
+#endif
