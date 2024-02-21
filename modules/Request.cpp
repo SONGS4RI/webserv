@@ -3,10 +3,9 @@
 #include <iostream>
 
 #include "Request.hpp"
+#include "HTTPInfo.hpp"
 
 using namespace std;
-
-Request* request = NULL;
 
 Request::Request(const int& clientSocketFd) {
 	init();
@@ -16,27 +15,22 @@ Request::Request(const int& clientSocketFd) {
 void Request::init() {
 	memset(buf, 0, BUF_SIZE);
 	this->readenContentLength = 0;
-	this->leftOverBuffer = "";
-	this->properties.clear();
+	this->leftOverBuffer = string(BUF_SIZE, '\0');
+	properties.clear();
 	this->status = ERequestStatus::START_LINE;
-}
-
-Request* Request::getRequest(const int& clientSocketFd) {
-	if (request == NULL) {
-		request = new Request(clientSocketFd);
-	}
-	return request;
 }
 
 bool Request::checkCRLF(const istringstream& iss) {
 	int readCnt = iss.gcount();
-	bool isValid = (readCnt > 1 && buf[readCnt - 2] == '\r' && buf[readCnt - 1] == '\n');
+	bool isValid = (readCnt > 1 && buf[readCnt - 2] == '\r' && buf[readCnt - 1] == '\0');// \n 은 readline 으로 걸러짐
 	if (isValid) {
+		buf[readCnt - 2] = '\0';
 		return true;
 	}
-	// 다 읽은 경우도 고려해야 할 수도 있음
-	if (!iss.eof()) {// crlf 로 안 끝났는데, 끝까지 읽지 않은 경우
+	if (iss.eof()) {// crlf 로 안 끝났는데, 끝까지 읽은 경우
 		leftOverBuffer = string(buf, iss.gcount());
+	} else {
+		throw new exception;// exception 도 할당 해제?
 	}
 	return false;
 }
@@ -48,38 +42,85 @@ void Request::readRestHttpMessage() {
 	}
 }
 
-void Request::parseStartLine(const istringstream& iss) {
+void Request::parseStartLine(istringstream& iss) {
+	iss.getline(buf, BUF_SIZE);
 	if (!checkCRLF(iss)) {
 		// eof 면??
 		return ;
 	}
-	istringstream startLine(buf, iss.gcount() - 2);
+	istringstream startLine(buf);
 	string method, requestUrl, httpVersion;
-	// GET /local/tmp HTTP/1.1 형식인지 체크
 	startLine >> method >> requestUrl >> httpVersion;
 	if (!startLine.eof() || startLine.fail() || buf[method.size()] != ' ' ||
-		buf[method.size() + 1 + requestUrl.size()]) {// 제대로 된 형식 이 아니라면
+		buf[method.size() + 1 + requestUrl.size()] != ' ') {// 제대로 된 형식 이 아니라면
 		throw new exception;
 	}
-	// 검증 해야함
+	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion);
 	properties["method"] = method;
 	properties["requestUrl"] = requestUrl;
-	properties["httpVersion"] = httpVersion;
 	status = ERequestStatus::HEADER;
 }
 
-void Request::parseHeader(const istringstream& iss) {
+void Request::parseHeader(istringstream& iss) {
+	iss.getline(buf, BUF_SIZE);
 	if (!checkCRLF(iss)) {
 		return ;
 	}
 	if (iss.gcount() == 2) {
-		// 메서드별 필수 헤더 값 있는지 체크 없으면 throw
+		HTTPInfo::isValidHeaderField(properties);
 		status = ERequestStatus::BODY;
 		return ;
 	}
 	// 한줄씩 읽은거 properties 에 저장
+	istringstream headerField(buf);
+	headerField.getline(buf, sizeof(buf), ':');
+	string key(buf), value, rest;
+	for (int i = 0; i < key.size(); i++) {
+		key[i] = tolower(key[i]);
+	}
+	// 이미 들어온 키인 경우
+	if (properties[key].size()) {
+		throw new exception;
+	}
+	if (key == "host" || key == "content-length" || key == "transfer-encoding") {
+		headerField >> value >> rest;
+		if (value == "" || rest != "") {
+			throw new exception;
+		}
+		properties[key] = value;
+	} else if (key == "content-type") {
+		headerField.getline(buf, sizeof(buf), ';');
+		istringstream section(buf);
+		section >> value >> rest;
+		if (value == "" || rest != "") {
+			throw new exception;
+		}
+		properties[key] = value;
+		headerField.getline(buf, sizeof(buf));
+		section.str(buf);
+		section.getline(buf, sizeof(buf), '=');
+		key = buf;
+		section >> value >> rest;
+		if (value == "" || rest != "") {
+			throw new exception;
+		}
+		properties[key] = value;
+	}
+}
 
+void Request::parseBody(istringstream& iss) {
+	// content type 별로 읽어야함
+	string contentType = properties["contentType"];
+	if (contentType == "default") {
 
+	} else if (contentType == "multipart/form-data") {
+		// text/plain: f
+		// 
+	} else if (contentType == "binary") {// Transfer-Encoding: chunked
+
+	} else {
+		throw new exception;
+	}
 }
 
 void Request::parseRequest(Client& client) {
@@ -88,7 +129,7 @@ void Request::parseRequest(Client& client) {
 		// 무언가 처리
 		return ;
 	}
-	string curParsing(leftOverBuffer), type;
+	string curParsing(leftOverBuffer);
 	curParsing.resize(leftOverBuffer.size() + n);
 
 	for (int i = 0; i < n; i++) {
@@ -99,29 +140,17 @@ void Request::parseRequest(Client& client) {
 	try {
 		while (!iss.eof() && status != ERequestStatus::PARSE_DONE) {
 			if (status == ERequestStatus::HEADER) {
-				iss.getline(buf, BUF_SIZE);
 				parseHeader(iss);
 			} else if (status == ERequestStatus::BODY) {
-				type = properties["type"];
-				if (type == "default") {
-
-				} else if (type == "multipart/form-data") {
-					
-				} else if (type == "binary") {// Transfer-Encoding: chunked
-
-				} else {
+				parseBody(iss);
+			} else if (status == ERequestStatus::START_LINE) {
+				parseStartLine(iss);
+			} else if (status == ERequestStatus::PARSE_DONE) {
+				if (readenContentLength != atoi(properties["contentLength"].c_str())) {// contentLength 있는 경우 없는경우 체크
 					throw new exception;
 				}
-			} else if (status == ERequestStatus::START_LINE) {
-				iss.getline(buf, BUF_SIZE);
-				parseStartLine(iss);
+				client.addResponse(new Response());
 			}
-		}
-		if (status == ERequestStatus::PARSE_DONE) {
-			if (readenContentLength != atoi(properties["contentLength"].c_str())) {
-				throw new exception;
-			}
-			client.addResponse(new Response());
 		}
 	} catch(const std::exception& e) {
 		// error response 생성

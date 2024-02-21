@@ -14,21 +14,20 @@ class Request {
 	private:
 		char buf[BUF_SIZE];
 		int readenContentLength;
-		static Request* request;
 		string leftOverBuffer;
-		unordered_map<string, string> properties;
+		map<string, string> properties;
 		int clientSocketFd;
+		
 		ERequestStatus status;
-
-		Request(const int& clientSocketFd);
 	public:
+		Request(const int& clientSocketFd);
 		~Request();
 
-		static Request* getRequest(const int& clientSocketFd);
 		void init();
 		void parseRequest(Client& client);
-		void parseStartLine(const istringstream& iss);
-		void parseHeader(const istringstream& iss);
+		void parseStartLine(istringstream& iss);
+		void parseHeader(istringstream& iss);
+		void parseBody(istringstream& iss);
 		void parseDefaultBody();
 		void parseChunkedBody();
 		void parseBinaryBody();// cgi

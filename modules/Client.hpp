@@ -9,7 +9,7 @@
 
 class Client {
 	private:
-		Request request;
+		Request* request;
 		deque<Response> responses;
 		int socket;
 	public:

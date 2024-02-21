@@ -15,10 +15,4 @@ enum ERequestStatus {
 	PARSE_DONE
 };
 
-enum EMothod {
-	GET,
-	POST,
-	DELETE
-};
-
 #endif

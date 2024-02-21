@@ -9,10 +9,11 @@ using namespace std;
 
 class HTTPInfo {
 	private :
-		static map<string, string> properties;
+		static map<string, vector<string> > allowedHeaderField;
 	public :
-		static bool isValidStartLine();
-		static bool isValidHeaderField();
+		static void init();
+		static bool isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion);
+		static bool isValidHeaderField(const map<string, string>& properties);
 };
 
 #endif

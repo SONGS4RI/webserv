@@ -42,9 +42,6 @@ void EventManager::handleEvent(const int& eventIdx) {
 			 * 2. http 메세지를 다 읽고 파싱해 request가 없어진 상태
 			 * 3. http 메세지를 다 못 읽은 경우 null 일리 없음
 			*/
-			if (request == NULL) {
-				request = new Request("");// 새로운 동적할당 말고 하나로 쓰는 방법을 생각해보자.
-			}
 			request->parseRequest(client);
 		}
 	} else if (cur_event->flags ==  EVFILT_WRITE) {// 쓰기
