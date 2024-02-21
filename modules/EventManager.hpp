@@ -1,4 +1,6 @@
 #pragma once
+#ifndef EVENTMANAGER_HPP
+#define EVENTMANAGER_HPP
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -28,3 +30,5 @@ class EventManager {
 		void handleEvent(const int& eventIdx);// write, read
 
 };
+
+#endif

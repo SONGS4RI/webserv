@@ -37,6 +37,11 @@ void EventManager::handleEvent(const int& eventIdx) {
 			Client client = sm->getClient(cur_event->ident);
 			// 클라이언트의 처리 상태에 따라 이벤트 처리
 			Request* request = client.getCurReqeust();
+			/**
+			 * 1. http 메세지를 다 읽고 파싱했는데 이후 request 까지 읽어서 leftover가 남은 경우 0 -> PARSE_DONE에서 처리
+			 * 2. http 메세지를 다 읽고 파싱해 request가 없어진 상태
+			 * 3. http 메세지를 다 못 읽은 경우 null 일리 없음
+			*/
 			request->parseRequest(client);
 		}
 	} else if (cur_event->flags ==  EVFILT_WRITE) {// 쓰기

@@ -1,36 +1,40 @@
 #pragma once
+#ifndef REQUEST_HPP
+#define REQUEST_HPP
 
 #include <string>
 #include <vector>
 #include <map>
+
 #include "Config.hpp"
 #include "Client.hpp"
-
-enum ERequestStatus {
-	START_LINE,
-	HEADER,
-	BODY,
-	PARSE_DONE,
-	ERROR
-};
+#include "./enum/Enums.hpp"
 
 class Request {
 	private:
-		ERequestStatus status;
-		string leftOverBuffer;
-		unordered_map<string, string> properties;
 		char buf[BUF_SIZE];
+		int readenContentLength;
+		string leftOverBuffer;
+		map<string, string> properties;
+		int clientSocketFd;
+		
+		ERequestStatus status;
 	public:
-		Request(/* args */);
-		// Request& operator=(const Request& ref);
+		Request(const int& clientSocketFd);
 		~Request();
 
+		void init();
 		void parseRequest(Client& client);
-		void parseStartLine();
-		void parseHeader();
+		void parseStartLine(istringstream& iss);
+		void parseHeader(istringstream& iss);
+		void parseBody(istringstream& iss);
 		void parseDefaultBody();
 		void parseChunkedBody();
 		void parseBinaryBody();// cgi
 
+		bool checkCRLF(const istringstream& iss);
+		void readRestHttpMessage();
 		void handleParsedRequest();
 };
+
+#endif

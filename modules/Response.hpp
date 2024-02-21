@@ -1,17 +1,15 @@
 #pragma once
+#ifndef RESPONSE_HPP
+#define RESPONSE_HPP
 
-enum EResponseStatus {
-	WAIT,
-	PROGRESS,
-	DONE
-};
+#include "./enum/Enums.hpp"
 
 class Response {
-	
-
 	private:
 		EResponseStatus status;
 	public:
 		Response(/* args */);
 		~Response();
 };
+
+#endif
