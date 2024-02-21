@@ -17,7 +17,6 @@ class Request {
 		string leftOverBuffer;
 		map<string, string> properties;
 		int clientSocketFd;
-		
 		ERequestStatus status;
 	public:
 		Request(const int& clientSocketFd);
@@ -33,6 +32,7 @@ class Request {
 		void parseBinaryBody();// cgi
 
 		bool checkCRLF(const istringstream& iss);
+		void checkHeaderLineBlock(const string& key, istringstream& iss);
 		void readRestHttpMessage();
 		void handleParsedRequest();
 };

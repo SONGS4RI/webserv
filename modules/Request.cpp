@@ -35,6 +35,19 @@ bool Request::checkCRLF(const istringstream& iss) {
 	return false;
 }
 
+void Request::checkHeaderLineBlock(const string& key, istringstream& block) {
+	// 이미 들어온 키인 경우
+	if (properties[key].size()) {
+		throw new exception;
+	}
+	string value, rest;
+	block >> value >> rest;
+	if (value == "" || rest != "") {
+		throw new exception;
+	}
+	properties[key] = value;
+}
+
 void Request::readRestHttpMessage() {
 	int n;
 	while (n = read(clientSocketFd, buf, BUF_SIZE) > 0) {
@@ -78,45 +91,36 @@ void Request::parseHeader(istringstream& iss) {
 	for (int i = 0; i < key.size(); i++) {
 		key[i] = tolower(key[i]);
 	}
-	// 이미 들어온 키인 경우
-	if (properties[key].size()) {
-		throw new exception;
-	}
 	if (key == "host" || key == "content-length" || key == "transfer-encoding") {
-		headerField >> value >> rest;
-		if (value == "" || rest != "") {
-			throw new exception;
-		}
-		properties[key] = value;
+		checkHeaderLineBlock(key, headerField);
 	} else if (key == "content-type") {
 		headerField.getline(buf, sizeof(buf), ';');
-		istringstream section(buf);
-		section >> value >> rest;
-		if (value == "" || rest != "") {
-			throw new exception;
-		}
-		properties[key] = value;
+		istringstream block(buf);
+		checkHeaderLineBlock(key, block);
 		headerField.getline(buf, sizeof(buf));
-		section.str(buf);
-		section.getline(buf, sizeof(buf), '=');
-		key = buf;
-		section >> value >> rest;
-		if (value == "" || rest != "") {
-			throw new exception;
+		if (headerField.gcount()) {
+			block.str(buf);
+			block.getline(buf, sizeof(buf), '=');
+			key = buf;
+			checkHeaderLineBlock(key, block);
 		}
-		properties[key] = value;
 	}
 }
 
 void Request::parseBody(istringstream& iss) {
+	string method = properties["method"];
+	if (method == "GET" || method == "DELETE") {
+		status = ERequestStatus::PARSE_DONE;
+		return ;
+	}
 	// content type 별로 읽어야함
-	string contentType = properties["contentType"];
-	if (contentType == "default") {
+	string contentType = properties["content-type"];
+	if (contentType == "text/plain" || contentType == "text/html") {
 
 	} else if (contentType == "multipart/form-data") {
 		// text/plain: f
 		// 
-	} else if (contentType == "binary") {// Transfer-Encoding: chunked
+	} else if (contentType == "application/octet-stream" && properties["transfer-encoding"] == "chunked") {
 
 	} else {
 		throw new exception;
@@ -146,10 +150,10 @@ void Request::parseRequest(Client& client) {
 			} else if (status == ERequestStatus::START_LINE) {
 				parseStartLine(iss);
 			} else if (status == ERequestStatus::PARSE_DONE) {
-				if (readenContentLength != atoi(properties["contentLength"].c_str())) {// contentLength 있는 경우 없는경우 체크
+				if (readenContentLength != atoi(properties["content-length"].c_str())) {// contentLength 있는 경우 없는경우 체크
 					throw new exception;
 				}
-				client.addResponse(new Response());
+				client.addResponse(Response());
 			}
 		}
 	} catch(const std::exception& e) {

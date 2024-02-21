@@ -8,7 +8,8 @@ using namespace std;
 
 
 int main() {
-	std::string s = "Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW\r\n";
+	// std::string s = "Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW\r\n";
+	std::string s = "Content-Type: multipart/form-data;";
 
     char buf[1024];
     memset(buf, 0, sizeof(buf));
@@ -25,5 +26,9 @@ int main() {
     istringstream rest(buf);
     rest >> b >> c;
     cout << b << '\n';
-    cout << c << "\n";
+    tmp.getline(buf, sizeof(buf));
+    rest.str(buf);
+    rest.getline(buf, sizeof(buf));
+    cout << rest.gcount() << "\n";
+    cout << buf << "\n";
 }

@@ -9,7 +9,7 @@
 
 class Client {
 	private:
-		Request* request;
+		Request request;
 		deque<Response> responses;
 		int socket;
 	public:
@@ -18,7 +18,7 @@ class Client {
 
 		Request* getCurReqeust();
 		Response* getCurResponse();
-		void addResponse(Response* response);
+		void addResponse(Response response);
 		const int& getSocketFd();
 };
 

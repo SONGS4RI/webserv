@@ -20,3 +20,10 @@ bool HTTPInfo::isValidStartLine(const string& method, const string& requestUrl, 
 	}
 	return true;
 }
+
+bool HTTPInfo::isValidHeaderField(map<string, string>& properties) {
+	if (properties["transfer-encoding"] == "chunked" && properties["content-length"] != "") {
+		return false;
+	}
+	
+}

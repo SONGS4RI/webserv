@@ -13,7 +13,7 @@ class HTTPInfo {
 	public :
 		static void init();
 		static bool isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion);
-		static bool isValidHeaderField(const map<string, string>& properties);
+		static bool isValidHeaderField(map<string, string>& properties);
 };
 
 #endif
