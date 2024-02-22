@@ -15,24 +15,51 @@ Request::Request(const int& clientSocketFd) {
 void Request::init() {
 	memset(buf, 0, BUF_SIZE);
 	this->readenContentLength = 0;
-	this->leftOverBuffer = string(BUF_SIZE, '\0');
+	this->leftOverBuffer = "";
+	this->body = "";
 	properties.clear();
 	this->status = ERequestStatus::START_LINE;
 }
 
-bool Request::checkCRLF(const istringstream& iss) {
-	int readCnt = iss.gcount();
+bool Request::checkCRLF() {
+	int readCnt = readbuf.gcount();
+	readenMessageLength += readCnt;
 	bool isValid = (readCnt > 1 && buf[readCnt - 2] == '\r' && buf[readCnt - 1] == '\0');// \n 은 readline 으로 걸러짐
 	if (isValid) {
 		buf[readCnt - 2] = '\0';
 		return true;
 	}
-	if (iss.eof()) {// crlf 로 안 끝났는데, 끝까지 읽은 경우
-		leftOverBuffer = string(buf, iss.gcount());
+	if (readbuf.eof()) {// crlf 로 안 끝났는데, 끝까지 읽은 경우
+		leftOverBuffer = string(buf, readbuf.gcount());
 	} else {
 		throw new exception;// exception 도 할당 해제?
 	}
 	return false;
+}
+
+void Request::readRestHttpMessage() {
+	int n;
+	while (n = read(clientSocketFd, buf, BUF_SIZE) > 0) {
+
+	}
+}
+
+void Request::parseStartLine() {
+	readbuf.getline(buf, BUF_SIZE);
+	if (!checkCRLF()) {
+		return ;
+	}
+	istringstream startLine(buf);
+	string method, requestUrl, httpVersion;
+	startLine >> method >> requestUrl >> httpVersion;
+	if (!startLine.eof() || startLine.fail() || buf[method.size()] != ' ' ||
+		buf[method.size() + 1 + requestUrl.size()] != ' ') {// 제대로 된 형식 이 아니라면
+		throw new exception;
+	}
+	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion);
+	properties[METHOD] = method;
+	properties[REQUEST_URL] = requestUrl;
+	status = ERequestStatus::HEADER;
 }
 
 void Request::checkHeaderLineBlock(const string& key, istringstream& block) {
@@ -48,38 +75,12 @@ void Request::checkHeaderLineBlock(const string& key, istringstream& block) {
 	properties[key] = value;
 }
 
-void Request::readRestHttpMessage() {
-	int n;
-	while (n = read(clientSocketFd, buf, BUF_SIZE) > 0) {
-
-	}
-}
-
-void Request::parseStartLine(istringstream& iss) {
-	iss.getline(buf, BUF_SIZE);
-	if (!checkCRLF(iss)) {
-		// eof 면??
+void Request::parseHeader() {
+	readbuf.getline(buf, BUF_SIZE);
+	if (!checkCRLF()) {
 		return ;
 	}
-	istringstream startLine(buf);
-	string method, requestUrl, httpVersion;
-	startLine >> method >> requestUrl >> httpVersion;
-	if (!startLine.eof() || startLine.fail() || buf[method.size()] != ' ' ||
-		buf[method.size() + 1 + requestUrl.size()] != ' ') {// 제대로 된 형식 이 아니라면
-		throw new exception;
-	}
-	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion);
-	properties["method"] = method;
-	properties["requestUrl"] = requestUrl;
-	status = ERequestStatus::HEADER;
-}
-
-void Request::parseHeader(istringstream& iss) {
-	iss.getline(buf, BUF_SIZE);
-	if (!checkCRLF(iss)) {
-		return ;
-	}
-	if (iss.gcount() == 2) {
+	if (readbuf.gcount() == 2) {
 		HTTPInfo::isValidHeaderField(properties);
 		status = ERequestStatus::BODY;
 		return ;
@@ -91,9 +92,9 @@ void Request::parseHeader(istringstream& iss) {
 	for (int i = 0; i < key.size(); i++) {
 		key[i] = tolower(key[i]);
 	}
-	if (key == "host" || key == "content-length" || key == "transfer-encoding") {
+	if (key == HOST || key == CONTENT_LENGTH || key == TRANSFER_ENCODING) {
 		checkHeaderLineBlock(key, headerField);
-	} else if (key == "content-type") {
+	} else if (key == CONTENT_TYPE) {
 		headerField.getline(buf, sizeof(buf), ';');
 		istringstream block(buf);
 		checkHeaderLineBlock(key, block);
@@ -107,27 +108,46 @@ void Request::parseHeader(istringstream& iss) {
 	}
 }
 
-void Request::parseBody(istringstream& iss) {
-	string method = properties["method"];
-	if (method == "GET" || method == "DELETE") {
-		status = ERequestStatus::PARSE_DONE;
-		return ;
+void Request::parseDefaultBody() {
+	size_t contentLength = atoi(properties[CONTENT_LENGTH].c_str());
+	size_t targetLength = contentLength - readenContentLength;
+	size_t allowedLength = targetLength < BUF_SIZE - readenMessageLength ? targetLength : BUF_SIZE - readenMessageLength;
+
+	readbuf.read(buf, allowedLength);
+	body.resize(body.size() + allowedLength);
+	for (int i = 0; i < allowedLength; i++) {
+		body[readenContentLength + i] = buf[i];
 	}
-	// content type 별로 읽어야함
-	string contentType = properties["content-type"];
-	if (contentType == "text/plain" || contentType == "text/html") {
-
-	} else if (contentType == "multipart/form-data") {
-		// text/plain: f
-		// 
-	} else if (contentType == "application/octet-stream" && properties["transfer-encoding"] == "chunked") {
-
-	} else {
+	readenContentLength += allowedLength;
+	if (readenContentLength == contentLength && readbuf.eof()) {
+		status = PARSE_DONE;
+	}
+	if (targetLength < 0) {
 		throw new exception;
 	}
 }
 
+void Request::parseMPFDBody() {
+	
+}
+
+void Request::parseBody() {
+	string method = properties[METHOD];
+	if (method == GET || method == DELETE) {
+		status = ERequestStatus::PARSE_DONE;
+		return ;
+	}
+	if (properties[CONTENT_LENGTH] != "") {
+		parseDefaultBody();
+	} else if (properties[CONTENT_TYPE] == MULTIPART_FORM_DATA) {
+		parseMPFDBody();
+	} else if (properties[TRANSFER_ENCODING] == CHUNKED) {
+		parseChunkedBody();
+	}
+}
+
 void Request::parseRequest(Client& client) {
+	readenMessageLength = 0;
 	int n = read(client.getSocketFd(), buf, sizeof(buf));
 	if (n <= 0) {
 		// 무언가 처리
@@ -139,21 +159,22 @@ void Request::parseRequest(Client& client) {
 	for (int i = 0; i < n; i++) {
 		curParsing[leftOverBuffer.size() + i] = buf[i];
 	}
-	istringstream iss(curParsing);
+	readbuf.str(curParsing);
 
 	try {
-		while (!iss.eof() && status != ERequestStatus::PARSE_DONE) {
+		while (!readbuf.eof()) {
 			if (status == ERequestStatus::HEADER) {
-				parseHeader(iss);
+				parseHeader();
 			} else if (status == ERequestStatus::BODY) {
-				parseBody(iss);
+				parseBody();
 			} else if (status == ERequestStatus::START_LINE) {
-				parseStartLine(iss);
+				parseStartLine();
 			} else if (status == ERequestStatus::PARSE_DONE) {
-				if (readenContentLength != atoi(properties["content-length"].c_str())) {// contentLength 있는 경우 없는경우 체크
+				if (readenContentLength != atoi(properties[CONTENT_LENGTH].c_str())) {// contentLength 있는 경우 없는경우 체크
 					throw new exception;
 				}
 				client.addResponse(Response());
+				break ;
 			}
 		}
 	} catch(const std::exception& e) {

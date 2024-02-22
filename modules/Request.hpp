@@ -13,25 +13,28 @@
 class Request {
 	private:
 		char buf[BUF_SIZE];
-		int readenContentLength;
+		size_t readenMessageLength;
+		size_t readenContentLength;
 		string leftOverBuffer;
+		string body;
 		map<string, string> properties;
 		int clientSocketFd;
 		ERequestStatus status;
+		istringstream readbuf;
 	public:
 		Request(const int& clientSocketFd);
 		~Request();
 
 		void init();
 		void parseRequest(Client& client);
-		void parseStartLine(istringstream& iss);
-		void parseHeader(istringstream& iss);
-		void parseBody(istringstream& iss);
+		void parseStartLine();
+		void parseHeader();
+		void parseBody();
 		void parseDefaultBody();
 		void parseChunkedBody();
-		void parseBinaryBody();// cgi
+		void parseMPFDBody();// multipart/form-data
 
-		bool checkCRLF(const istringstream& iss);
+		bool checkCRLF();
 		void checkHeaderLineBlock(const string& key, istringstream& iss);
 		void readRestHttpMessage();
 		void handleParsedRequest();

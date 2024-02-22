@@ -7,13 +7,30 @@
 
 using namespace std;
 
+#define METHOD "method"
+#define GET "GET"
+#define POST "POST"
+#define DELETE "DELETE"
+#define REQUEST_URL "requestUrl"
+#define HTTP_VERSION "HTTP/1.1"
+#define HOST "host"
+#define CONTENT_TYPE "content-type"
+#define TEXT_PLAIN "text/plain"
+#define TEXT_HTML "text/html"
+#define APPLICATION_OCTET_STREAM "application/octet-stream"
+#define MULTIPART_FORM_DATA "multipart/form-data"
+#define IMAGE_PNG "image/png"
+#define CONTENT_LENGTH "content-length"
+#define BOUNDARY "boundary"
+#define TRANSFER_ENCODING "transfer-encoding"
+#define CHUNKED "chunked"
+
 class HTTPInfo {
 	private :
-		static map<string, vector<string> > allowedHeaderField;
+
 	public :
-		static void init();
-		static bool isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion);
-		static bool isValidHeaderField(map<string, string>& properties);
+		static void isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion);
+		static void isValidHeaderField(map<string, string>& properties);
 };
 
 #endif

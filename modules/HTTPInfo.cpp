@@ -1,29 +1,41 @@
 #include "HTTPInfo.hpp"
 
-map<string, vector<string> > HTTPInfo::allowedHeaderField;
-
-void HTTPInfo::init() {
-	allowedHeaderField["content-type"].push_back("text/plain");
-	allowedHeaderField["content-type"].push_back("text/html");
-	allowedHeaderField["content-type"].push_back("application/octet-stream");
-	allowedHeaderField["content-type"].push_back("multipart/form-data");
-	allowedHeaderField["content-type"].push_back("image/png");
-}
-
-bool HTTPInfo::isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion) {
-	if (!(method == "GET" || method == "POST" || method == "DELETE")) {
-		return false;
+void HTTPInfo::isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion) {
+	if (!(method == GET || method == POST || method == DELETE)) {
+		throw new exception;
 	}
 	// 유효 url 체크
-	if (httpVersion != "HTTP/1.1") {
-		return false;
+	if (httpVersion != HTTP_VERSION) {
+		throw new exception;
 	}
-	return true;
 }
 
-bool HTTPInfo::isValidHeaderField(map<string, string>& properties) {
-	if (properties["transfer-encoding"] == "chunked" && properties["content-length"] != "") {
-		return false;
+void HTTPInfo::isValidHeaderField(map<string, string>& properties) {
+	string contentType = properties[CONTENT_TYPE];
+	string contentLength = properties[CONTENT_LENGTH];
+	string transferEncoding = properties[TRANSFER_ENCODING];
+	string boundary = properties[BOUNDARY];
+	string host = properties[HOST];// 호스트 체크 해줘야함
+
+	for (size_t i = 0; i < contentLength.size(); i++) {
+		if (!isnumber(contentLength[i])) {
+			throw new exception;
+		}
 	}
-	
+	if (!(transferEncoding == "" || transferEncoding == CHUNKED)) {
+		throw new exception;
+	}
+	if (contentType == TEXT_HTML || contentType == TEXT_PLAIN ||
+		contentType == IMAGE_PNG || contentType == APPLICATION_OCTET_STREAM) {
+		if ((transferEncoding == CHUNKED && contentLength != "") ||
+			(transferEncoding != CHUNKED && contentLength == "")) {
+			throw new exception;
+		}
+	} else if (contentType == MULTIPART_FORM_DATA) {
+		if (contentLength != "" || transferEncoding != "" || boundary == "") {
+			throw new exception;
+		}
+	} else {
+		throw new exception;
+	}
 }
