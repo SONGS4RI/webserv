@@ -9,8 +9,11 @@
 
 # include "utility.hpp"
 # include "Block.hpp"
+# include "../Config.hpp"
 
 using namespace std;
+
+class Config;
 
 class ParseConfig {
 	private:
@@ -18,6 +21,8 @@ class ParseConfig {
 		vector<string>	lawLines;
 		vector<string>	words;
 		Block			globalBlock;
+
+		vector<Config>	serverConfigs;
 
 		void	setLawLines(const char* configFileName);
 		void	deleteComment();
@@ -39,8 +44,13 @@ class ParseConfig {
 		bool	isCharsetInString(const string& str, const string charset);
 		bool	isCharInCharset(char c, const string charset);
 		bool	isSkipBlock(vector<string>::iterator it);
-	public:
+
+		void	checkBlocksWrong();
+
+		void	setServerConfigs();
+		public:
 		ParseConfig(const char* configFileName);
+		vector<Config>&	getServerConfigs();
 };
 
 #endif

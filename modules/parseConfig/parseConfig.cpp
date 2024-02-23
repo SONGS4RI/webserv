@@ -1,4 +1,4 @@
-#include "parse_config.hpp"
+#include "parseConfig.hpp"
 
 /* config 파일을 읽고, 주석을 제거 후 단어와 특수문자 {, }, ; 로 를 순서대로 분리해 vector에 저장한다.
 그리고 지시어는 map<string, vector<string> > 에 저장
@@ -14,10 +14,10 @@ ParseConfig::ParseConfig(const char* configFileName) : charset("{};"), globalBlo
 	} catch(const char * e) {
 		exitWithErrmsg(e);
 	}
-	printAllBlocks();
+	checkBlocksWrong();
+	setServerConfigs();
+//	printAllBlocks();
 }
-
-
 
 /*config 파일 읽고 lawlines에 저장*/
 void	ParseConfig::setLawLines(const char* configFileName)
@@ -333,4 +333,22 @@ void	ParseConfig::deleteComment() {
 			lawLines[i].erase(pos);
 		}
 	}
+}
+
+void	ParseConfig::checkBlocksWrong() {
+	if (globalBlock.blocks.size() != 1) {
+		exitWithErrmsg("Error: http block is not 1 in config file");
+	} else if (globalBlock.blocks[0].blocks.size() < 1) {
+		exitWithErrmsg("Error: no server block in config file");
+	}
+}
+
+void	ParseConfig::setServerConfigs() {
+	for (size_t i = 0; i < globalBlock.blocks[0].blocks.size(); i++) {
+		serverConfigs.push_back(Config(globalBlock, globalBlock.blocks[0].blocks[i]));
+	}
+}
+
+vector<Config>&	ParseConfig::getServerConfigs() {
+	return (serverConfigs);
 }

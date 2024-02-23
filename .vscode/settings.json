@@ -11,6 +11,9 @@
 		"map": "cpp",
 		"system_error": "cpp",
 		"unordered_map": "cpp",
-		"vector": "cpp"
+		"vector": "cpp",
+		"iterator": "cpp",
+		"iosfwd": "cpp",
+		"deque": "cpp"
 	}
 }

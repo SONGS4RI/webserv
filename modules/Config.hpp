@@ -2,7 +2,11 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
+#include <map>
 #include <vector>
+#include <string>
+#include "./enum/Enums.hpp"
+#include "./parseConfig/parseConfig.hpp"
 
 #define BUF_SIZE 1024
 
@@ -10,15 +14,38 @@ using namespace std;
 
 class Config {
 	private:
-		Config(/* 서버별 블록 객체가 있는게 편하면 이때 집어 넣어서 인스턴스 생성하면 될듯 */);//
+		EConfigType	type;
+		map<string, Config>	locations;
+		int		port;
+		string	serverName;
+		size_t	clientMaxBodySize;
+		string	root;
+		string	index;
+		bool	autoindexOn;
+		/* location 블록에만 적용 */
+		string			returnRedir;
+		vector<string>	allowMethods;
 	public:
-		~Config();// conf 파일 닫기
-		static vector<Config> parse(char* fileName);// 파일 파싱하면서 서버 블록으로 나눈 벡터
-		/*
+		Config();
+		Config(Block& globalBlock, Block& serverBlock);
+		Config(Config& serverConfig, Block& locationBlock);
+		void	setByGlobalBlock(const Block& globalBlock);
+		void	setByServerBlock(const Block& serverBlock);
+		void	setByLocationBlock(Block& locationBlock);
+		//~Config();// conf 파일 닫기
 		
-			파싱한 서버 블록별 데이터
-		
-		*/
+		EConfigType	getType();
+		map<string, Config>	getLocations();
+		int	getPort();
+		string	getServerName();
+		size_t	getClientMaxBodySize();
+		string	getRoot();
+		string	getIndex();
+		bool	getAutoindexOn();
+		string	getReturnRedir();
+		vector<string>	getAllowMethods();
+		// static vector<Config> parse(char* fileName);// 파일 파싱하면서 서버 블록으로 나눈 벡터
+		void	printAllInfo(Config& con);
 };
 
 #endif
