@@ -4,6 +4,7 @@
 
 #include "Request.hpp"
 #include "HTTPInfo.hpp"
+#include "Utils.hpp"
 
 using namespace std;
 
@@ -12,13 +13,15 @@ Request::Request(const int& clientSocketFd) {
 	this->clientSocketFd = clientSocketFd;
 }
 
+Request::~Request() {}
+
 void Request::init() {
 	memset(buf, 0, BUF_SIZE);
 	this->readenContentLength = 0;
 	this->leftOverBuffer = "";
 	this->body = "";
 	properties.clear();
-	this->status = ERequestStatus::START_LINE;
+	this->status = START_LINE;
 }
 
 bool Request::checkCRLF() {
@@ -38,10 +41,10 @@ bool Request::checkCRLF() {
 }
 
 void Request::readRestHttpMessage() {
-	int n;
-	while (n = read(clientSocketFd, buf, BUF_SIZE) > 0) {
+	// int n;
+	// while (n = read(clientSocketFd, buf, BUF_SIZE) > 0) {
 
-	}
+	// }
 }
 
 void Request::parseStartLine() {
@@ -59,7 +62,7 @@ void Request::parseStartLine() {
 	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion);
 	properties[METHOD] = method;
 	properties[REQUEST_URL] = requestUrl;
-	status = ERequestStatus::HEADER;
+	status = HEADER;
 }
 
 void Request::checkHeaderLineBlock(const string& key, istringstream& block) {
@@ -82,12 +85,12 @@ void Request::parseHeader() {
 	}
 	if (readbuf.gcount() == 2) {
 		HTTPInfo::isValidHeaderField(properties);
-		status = ERequestStatus::BODY;
+		status = BODY;
 		return ;
 	}
 	// 한줄씩 읽은거 properties 에 저장
 	istringstream headerField(buf);
-	headerField.getline(buf, sizeof(buf), ':');
+	headerField.getline(buf, BUF_SIZE, ':');
 	string key(buf), value, rest;
 	for (int i = 0; i < key.size(); i++) {
 		key[i] = tolower(key[i]);
@@ -95,13 +98,13 @@ void Request::parseHeader() {
 	if (key == HOST || key == CONTENT_LENGTH || key == TRANSFER_ENCODING) {
 		checkHeaderLineBlock(key, headerField);
 	} else if (key == CONTENT_TYPE) {
-		headerField.getline(buf, sizeof(buf), ';');
+		headerField.getline(buf, BUF_SIZE, ';');
 		istringstream block(buf);
 		checkHeaderLineBlock(key, block);
-		headerField.getline(buf, sizeof(buf));
+		headerField.getline(buf, BUF_SIZE);
 		if (headerField.gcount()) {
 			block.str(buf);
-			block.getline(buf, sizeof(buf), '=');
+			block.getline(buf, BUF_SIZE, '=');
 			key = buf;
 			checkHeaderLineBlock(key, block);
 		}
@@ -111,14 +114,13 @@ void Request::parseHeader() {
 void Request::parseDefaultBody() {
 	size_t contentLength = atoi(properties[CONTENT_LENGTH].c_str());
 	size_t targetLength = contentLength - readenContentLength;
-	size_t allowedLength = targetLength < BUF_SIZE - readenMessageLength ? targetLength : BUF_SIZE - readenMessageLength;
 
-	readbuf.read(buf, allowedLength);
-	body.resize(body.size() + allowedLength);
-	for (int i = 0; i < allowedLength; i++) {
+	readbuf.read(buf, BUF_SIZE);
+	body.resize(body.size() + readbuf.gcount());
+	for (size_t i = 0; i < readbuf.gcount(); i++) {
 		body[readenContentLength + i] = buf[i];
 	}
-	readenContentLength += allowedLength;
+	readenContentLength += readbuf.gcount();
 	if (readenContentLength == contentLength && readbuf.eof()) {
 		status = PARSE_DONE;
 	}
@@ -127,20 +129,43 @@ void Request::parseDefaultBody() {
 	}
 }
 
-void Request::parseMPFDBody() {
-	
+void Request::parseChunkedBody() {
+	while (!readbuf.eof()) {
+		// 크기
+		readbuf.getline(buf, BUF_SIZE);
+		if (!checkCRLF()) {
+			throw new exception;
+		}
+		long contentLength = Utils::hexToDecimal(buf);// int contentLength = hex -> 십진수
+		if (!contentLength) {
+			status = PARSE_DONE;
+			return ;
+		}
+		// 바디
+		readbuf.getline(buf, BUF_SIZE);
+		if (!checkCRLF() || readbuf.gcount() != contentLength) {
+			throw new exception;
+		}
+		body.resize(body.size() + readbuf.gcount() - 2);
+		for (int i = 0; i < readbuf.gcount() - 2; i++) {
+			body[readenContentLength + i] = buf[i];
+		}
+		// 개행
+		readbuf.getline(buf, BUF_SIZE);
+		if (!checkCRLF() || readbuf.gcount() != 2) {
+			throw new exception;
+		}
+	}
 }
 
 void Request::parseBody() {
 	string method = properties[METHOD];
 	if (method == GET || method == DELETE) {
-		status = ERequestStatus::PARSE_DONE;
+		status = PARSE_DONE;
 		return ;
 	}
 	if (properties[CONTENT_LENGTH] != "") {
 		parseDefaultBody();
-	} else if (properties[CONTENT_TYPE] == MULTIPART_FORM_DATA) {
-		parseMPFDBody();
 	} else if (properties[TRANSFER_ENCODING] == CHUNKED) {
 		parseChunkedBody();
 	}
@@ -149,7 +174,7 @@ void Request::parseBody() {
 void Request::parseRequest(Client& client) {
 	readenMessageLength = 0;
 	int n = read(client.getSocketFd(), buf, sizeof(buf));
-	if (n <= 0) {
+	if (n < 0) {
 		// 무언가 처리
 		return ;
 	}
@@ -163,14 +188,14 @@ void Request::parseRequest(Client& client) {
 
 	try {
 		while (!readbuf.eof()) {
-			if (status == ERequestStatus::HEADER) {
+			if (status == HEADER) {
 				parseHeader();
-			} else if (status == ERequestStatus::BODY) {
+			} else if (status == BODY) {
 				parseBody();
-			} else if (status == ERequestStatus::START_LINE) {
+			} else if (status == START_LINE) {
 				parseStartLine();
-			} else if (status == ERequestStatus::PARSE_DONE) {
-				if (readenContentLength != atoi(properties[CONTENT_LENGTH].c_str())) {// contentLength 있는 경우 없는경우 체크
+			} else if (status == PARSE_DONE) {
+				if (readenContentLength != (size_t)atoi(properties[CONTENT_LENGTH].c_str())) {// contentLength 있는 경우 없는경우 체크
 					throw new exception;
 				}
 				client.addResponse(Response());

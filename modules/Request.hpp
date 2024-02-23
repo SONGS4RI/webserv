@@ -32,7 +32,6 @@ class Request {
 		void parseBody();
 		void parseDefaultBody();
 		void parseChunkedBody();
-		void parseMPFDBody();// multipart/form-data
 
 		bool checkCRLF();
 		void checkHeaderLineBlock(const string& key, istringstream& iss);

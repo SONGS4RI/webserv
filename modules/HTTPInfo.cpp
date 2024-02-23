@@ -4,8 +4,7 @@ void HTTPInfo::isValidStartLine(const string& method, const string& requestUrl, 
 	if (!(method == GET || method == POST || method == DELETE)) {
 		throw new exception;
 	}
-	// 유효 url 체크
-	if (httpVersion != HTTP_VERSION) {
+	if (httpVersion != HTTP_VERSION || requestUrl == "") {
 		throw new exception;
 	}
 }
