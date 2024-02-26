@@ -7,18 +7,19 @@
 #include <map>
 #include <sstream>
 #include "EnumsTest.hpp"
+#include "RequestBodyTest.hpp"
 
 using namespace std;
 
-#define BUF_SIZE 10
+#define BUF_SIZE 1024
+#define TMP_SIZE 1024///////////
 
 class RequestTest {
 	private:
-		char buf[1024];
-		size_t readenMessageLength;
+		char buf[TMP_SIZE];
 		size_t readenContentLength;
 		string leftOverBuffer;
-		string body;
+		RequestBodyTest body;
 		map<string, string> properties;
 		int clientSocketFd;
 		ERequestStatus status;
@@ -36,6 +37,7 @@ class RequestTest {
 		void parseDefaultBody();
 		void parseChunkedBody();
 
+		bool getLineAndCheckCRLF(const char& deli);
 		bool checkCRLF();
 		void checkHeaderLineBlock(const string& key, istringstream& iss);
 		void readRestHttpMessage();

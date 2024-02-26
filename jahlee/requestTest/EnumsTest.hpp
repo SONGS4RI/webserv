@@ -15,4 +15,10 @@ enum ERequestStatus {
 	PARSE_DONE
 };
 
+enum EChunkedStatus {
+	LENGTH,
+	DATA,
+	CRLF
+};
+
 #endif

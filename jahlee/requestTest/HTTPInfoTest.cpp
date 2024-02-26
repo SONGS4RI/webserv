@@ -31,7 +31,7 @@ void HTTPInfoTest::isValidHeaderField(map<string, string>& properties) {
 			throw new exception;
 		}
 	} else if (contentType == MULTIPART_FORM_DATA) {
-		if (contentLength != "" || transferEncoding != "" || boundary == "") {
+		if (contentLength == "" || transferEncoding != "" || boundary == "") {
 			throw new exception;
 		}
 	} else {
