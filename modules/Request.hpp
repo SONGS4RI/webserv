@@ -5,18 +5,21 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <sstream>
 
 #include "Config.hpp"
 #include "Client.hpp"
+#include "RequestBody.hpp"
 #include "./enum/Enums.hpp"
+
+#define TMP_SIZE 1024////config max body size로 교체해야함
 
 class Request {
 	private:
-		char buf[BUF_SIZE];
-		size_t readenMessageLength;
+		char buf[TMP_SIZE];
 		size_t readenContentLength;
 		string leftOverBuffer;
-		string body;
+		RequestBody body;
 		map<string, string> properties;
 		int clientSocketFd;
 		ERequestStatus status;
@@ -33,6 +36,7 @@ class Request {
 		void parseDefaultBody();
 		void parseChunkedBody();
 
+		bool getLineAndCheckCRLF(const char& deli);
 		bool checkCRLF();
 		void checkHeaderLineBlock(const string& key, istringstream& iss);
 		void readRestHttpMessage();

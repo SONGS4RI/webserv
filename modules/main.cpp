@@ -12,25 +12,19 @@ int main(int argc, char** argv) {
 	// parse config
 	SocketManager* sm = SocketManager::getInstance();
 	EventManager* em = EventManager::getInstance();
+	vector<Config> serverConfigs = Config::parse(argv[1]);
+	sm->initServerSocket(serverConfigs);
+	int newEvents;
 
-	try {
-		vector<Config> serverConfigs = Config::parse(argv[1]);
-
-		sm->initServerSocket(serverConfigs);
-
-		int newEvents;
-
-		while (1) {
-			newEvents = em->detectEvent();
-			for (int i=0; i<newEvents; i++) {
+	while (1) {
+		newEvents = em->detectEvent();
+		for (int i=0; i<newEvents; i++) {
+			try {
 				em->handleEvent(i);
+			} catch(const std::exception& e) {
+				std::cerr << e.what() << '\n';
 			}
 		}
-	} catch (exception& e) {
-		cout << e.what() << endl;
-		delete sm;
-		delete em;
-		return (1);
 	}
 	delete sm;
 	delete em;
