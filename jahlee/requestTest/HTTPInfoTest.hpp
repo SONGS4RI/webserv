@@ -25,7 +25,7 @@ using namespace std;
 #define TRANSFER_ENCODING "transfer-encoding"
 #define CHUNKED "chunked"
 
-class HTTPInfo {
+class HTTPInfoTest {
 	private :
 
 	public :

@@ -6,30 +6,31 @@
 #include <vector>
 #include <map>
 #include <sstream>
+#include "EnumsTest.hpp"
+#include "RequestBodyTest.hpp"
 
-#include "Config.hpp"
-#include "Client.hpp"
-#include "RequestBody.hpp"
-#include "./enum/Enums.hpp"
+using namespace std;
 
-#define TMP_SIZE 1024////config max body size로 교체해야함
+#define BUF_SIZE 1024
+#define TMP_SIZE 1024///////////
 
-class Request {
+class RequestTest {
 	private:
 		char buf[TMP_SIZE];
 		size_t readenContentLength;
 		string leftOverBuffer;
-		RequestBody body;
+		RequestBodyTest body;
 		map<string, string> properties;
 		int clientSocketFd;
 		ERequestStatus status;
 		istringstream readbuf;
 	public:
-		Request(const int& clientSocketFd);
-		~Request();
+		RequestTest(const int& clientSocketFd);
+		~RequestTest();
 
 		void init();
-		void parseRequest(Client& client);
+		ERequestStatus getStatus();
+		void parseRequest(int fd);
 		void parseStartLine();
 		void parseHeader();
 		void parseBody();
@@ -41,6 +42,7 @@ class Request {
 		void checkHeaderLineBlock(const string& key, istringstream& iss);
 		void readRestHttpMessage();
 		void handleParsedRequest();
+		void toString();
 };
 
 #endif

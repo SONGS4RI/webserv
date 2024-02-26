@@ -10,6 +10,8 @@ class Response {
 	public:
 		Response(/* args */);
 		~Response();
+
+		
 };
 
 #endif

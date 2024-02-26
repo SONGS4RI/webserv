@@ -17,18 +17,26 @@ int main() {
 
 	char buf[1024];
 	fd = open("nullReadingTestResult", O_RDONLY, ios::binary);
-	int n = read(fd, buf, sizeof(buf));
+	int n = read(fd, buf, 6);
+	cout << n << "\n";
 	string tmp(n, '\0');
 	for (int i = 0; i < n; i++) {
 		tmp[i] = buf[i];
 	}
 	istringstream iss(tmp);
-	while (!iss.eof()) {
-		iss >> tmp;
-		cout << tmp << "\n";
+	iss.read(buf, n);
+	cout << buf << "\n";
+	cout << (iss.eof() ? "true" : "false") << "\n";
+
+	n = read(fd, buf, 6);
+	cout << n << "\n";
+	for (int i = 0; i < n; i++) {
+		tmp[i] = buf[i];
 	}
-	string leftOver(tmp);
-	cout << leftOver << "\n";
-	cout << leftOver.size() << "\n";
+	iss.str(tmp);
+	iss.read(buf, n);
+	cout << buf << "\n";
+	cout << (iss.eof() ? "true" : "false") << "\n";
+
 	close(fd);
 }

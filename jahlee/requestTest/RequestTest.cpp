@@ -2,34 +2,47 @@
 #include <sstream>
 #include <iostream>
 
-#include "Request.hpp"
-#include "HTTPInfo.hpp"
-#include "Utils.hpp"
+#include "RequestTest.hpp"
+#include "HTTPInfoTest.hpp"
+#include "UtilsTest.hpp"
 
 using namespace std;
 
-Request::Request(const int& clientSocketFd) {
+RequestTest::RequestTest(const int& clientSocketFd) {
 	init();
 	this->clientSocketFd = clientSocketFd;
 }
 
-Request::~Request() {}
+RequestTest::~RequestTest() {
+}
 
-void Request::init() {
+void RequestTest::toString() {
+
+	map<string, string>::iterator iter = properties.begin();
+	cout << "[key]     :   [value]\n";
+	for (; iter != properties.end(); iter++) {
+		cout << iter->first << ":" << iter->second << "\n";
+	}
+	cout << "readenContentLength" << ":" << readenContentLength << "\n";
+	cout << "[BODY]\n";
+	cout << body.getBody() << "\n";
+}
+
+void RequestTest::init() {
 	memset(buf, 0, TMP_SIZE);
 	this->readenContentLength = 0;
 	this->leftOverBuffer = "";
-	this->body = RequestBody();
+	this->body = RequestBodyTest();
 	properties.clear();
 	this->status = START_LINE;
 }
 
-bool Request::getLineAndCheckCRLF(const char& deli) {//////////////////////////////////
+bool RequestTest::getLineAndCheckCRLF(const char& deli) {//////////////////////////////////
 	readbuf.getline(buf, TMP_SIZE, deli);
 	return checkCRLF();
 }
 
-bool Request::checkCRLF() {
+bool RequestTest::checkCRLF() {
 	int readCnt = readbuf.gcount();
 	bool isValid = (readCnt > 1 && buf[readCnt - 2] == '\r' && buf[readCnt - 1] == '\0');// \n 은 readline 으로 걸러짐
 	if (isValid) {
@@ -44,14 +57,14 @@ bool Request::checkCRLF() {
 	return false;
 }
 
-void Request::readRestHttpMessage() {
+void RequestTest::readRestHttpMessage() {
 	// int n;
 	// while (n = read(clientSocketFd, buf, BUF_SIZE) > 0) {
 
 	// }
 }
 
-void Request::parseStartLine() {
+void RequestTest::parseStartLine() {
 	if (!getLineAndCheckCRLF('\n')) {
 		return ;
 	}
@@ -62,14 +75,14 @@ void Request::parseStartLine() {
 		buf[method.size() + 1 + requestUrl.size()] != ' ') {// 제대로 된 형식 이 아니라면
 		throw new exception;
 	}
-	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion);
+	HTTPInfoTest::isValidStartLine(method, requestUrl, httpVersion);
 	properties[METHOD] = method;
 	properties[REQUEST_URL] = requestUrl;
 	status = HEADER;
 	cout << "StartLine DONE\n";
 }
 
-void Request::checkHeaderLineBlock(const string& tmpKey, istringstream& block) {
+void RequestTest::checkHeaderLineBlock(const string& tmpKey, istringstream& block) {
 	istringstream keyblock(tmpKey);
 	string key, value, rest;
 	keyblock >> key >> rest;
@@ -86,12 +99,12 @@ void Request::checkHeaderLineBlock(const string& tmpKey, istringstream& block) {
 	properties[key] = value;
 }
 
-void Request::parseHeader() {
+void RequestTest::parseHeader() {
 	if (!getLineAndCheckCRLF('\n')) {
 		return ;
 	}
 	if (readbuf.gcount() == 2) {
-		HTTPInfo::isValidHeaderField(properties);
+		HTTPInfoTest::isValidHeaderField(properties);
 		status = BODY;
 		size_t contentLength = properties[CONTENT_LENGTH] != "" ? atoi(properties[CONTENT_LENGTH].c_str()) : 0;
 		body.init(properties[CONTENT_TYPE], contentLength);
@@ -122,7 +135,7 @@ void Request::parseHeader() {
 	}
 }
 
-void Request::parseDefaultBody() {
+void RequestTest::parseDefaultBody() {
 	size_t contentLength = body.getContentLength();
 	size_t targetLength = contentLength - readenContentLength;
 	cout << "contentLength:" << contentLength << "\n";
@@ -140,14 +153,14 @@ void Request::parseDefaultBody() {
 	}
 }
 
-void Request::parseChunkedBody() {
+void RequestTest::parseChunkedBody() {
 	while (!readbuf.eof()) {
 		if (body.getChunkedStatus() == LENGTH) {
 			if (!getLineAndCheckCRLF('\n')) {
 				return ;
 			}
 			body.setChunkedStatus(DATA);
-			body.setContentLength(Utils::hexToDecimal(buf));// int contentLength = hex -> 십진수
+			body.setContentLength(UtilsTest::hexToDecimal(buf));// int contentLength = hex -> 십진수
 			if (!body.getContentLength()) {
 				status = PARSE_DONE;
 				cout << "Body DONE\n";
@@ -175,7 +188,7 @@ void Request::parseChunkedBody() {
 	}
 }
 
-void Request::parseBody() {
+void RequestTest::parseBody() {
 	string method = properties[METHOD];
 	if (method == GET || method == DELETE) {
 		status = PARSE_DONE;
@@ -189,8 +202,8 @@ void Request::parseBody() {
 	}
 }
 
-void Request::parseRequest(Client& client) {
-	int n = read(client.getSocketFd(), buf, BUF_SIZE);
+void RequestTest::parseRequest(int fd) {
+	int n = read(fd, buf, BUF_SIZE);
 	if (n < 0) {
 		// 무언가 처리
 		return ;
@@ -216,11 +229,14 @@ void Request::parseRequest(Client& client) {
 				if (properties[TRANSFER_ENCODING] != CHUNKED && readenContentLength != body.getContentLength()) {// contentLength 있는 경우 없는경우 체크
 					throw new exception;
 				}
-				// Response 만들기전 요청 처리
 				break ;
 			}
 		}
 	} catch(const std::exception* e) {
 		throw e;
 	}
+}
+
+ERequestStatus RequestTest::getStatus() {
+	return status;
 }

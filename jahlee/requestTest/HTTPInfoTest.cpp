@@ -1,6 +1,6 @@
-#include "HTTPInfo.hpp"
+#include "HTTPInfoTest.hpp"
 
-void HTTPInfo::isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion) {
+void HTTPInfoTest::isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion) {
 	if (!(method == GET || method == POST || method == DELETE)) {
 		throw new exception;
 	}
@@ -9,7 +9,7 @@ void HTTPInfo::isValidStartLine(const string& method, const string& requestUrl, 
 	}
 }
 
-void HTTPInfo::isValidHeaderField(map<string, string>& properties) {
+void HTTPInfoTest::isValidHeaderField(map<string, string>& properties) {
 	string contentType = properties[CONTENT_TYPE];
 	string contentLength = properties[CONTENT_LENGTH];
 	string transferEncoding = properties[TRANSFER_ENCODING];

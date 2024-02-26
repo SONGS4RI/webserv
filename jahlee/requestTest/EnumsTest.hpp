@@ -1,6 +1,6 @@
 #pragma once
-#ifndef ENUMS_HPP
-#define ENUMS_HPP
+#ifndef ENUMS_TEST_HPP
+#define ENUMS_TEST_HPP
 
 enum EResponseStatus {
 	WAIT,
