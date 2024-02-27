@@ -7,9 +7,9 @@
 # include <vector>
 # include <map>
 
-# include "utility.hpp"
+# include "Utils.hpp"
 # include "Block.hpp"
-# include "../Config.hpp"
+# include "Config.hpp"
 
 using namespace std;
 
