@@ -19,5 +19,6 @@ class Utils {
 };
 
 void	exitWithErrmsg(std::string errmsg);
+string intToString(int number);
 
 #endif

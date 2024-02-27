@@ -4,7 +4,8 @@ SRC = main.cpp\
 	ParseConfig.cpp\
 	Block.cpp\
 	Utils.cpp\
-	Config.cpp
+	Config.cpp\
+	Response.cpp
 
 
 OBJ = $(SRC:.cpp=.o)
