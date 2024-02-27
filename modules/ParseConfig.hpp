@@ -1,5 +1,5 @@
-#ifndef PARSE_CONFIG_HPP
-# define PARSE_CONFIG_HPP
+#ifndef PARSECONFIG_HPP
+# define PARSECONFIG_HPP
 
 # include <iostream>
 # include <string>
