@@ -1,6 +1,7 @@
 #include "ParseConfig.hpp"
 #include "Config.hpp"
 #include "Response.hpp"
+#include "fortest.hpp"
 //#include "EventManager.hpp"
 //#include "SocketManager.hpp"
 //#include "Server.hpp"
@@ -21,7 +22,7 @@ int main(int argc, char** argv) {
 		exitWithErrmsg(errstr);
 	}
 	string	tmptype("text/plain");
-	string	tmpbody("asdqwezxcalsdjaskldjasldjaskldjasklj");
+	string	tmpbody = fileToString("configuration_example/index.html");
 	Response	response(200, tmptype, tmpbody);
 
 	response.printAllInfo();
