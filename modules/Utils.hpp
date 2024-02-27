@@ -2,6 +2,7 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
+#include <iostream>
 #include <cstdlib>
 #include <string>
 
@@ -16,5 +17,7 @@ class Utils {
 			return strtol(hex.c_str(), NULL, 16);
 		};
 };
+
+void	exitWithErrmsg(std::string errmsg);
 
 #endif

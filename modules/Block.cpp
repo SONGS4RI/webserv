@@ -3,7 +3,7 @@
 
 Block::Block(string _type) : type(_type) {}
 
-/*지시어에 argument들을 vector<string> 으로 저장해 return*/
+/*지시어에 argument(word)들을 vector<string> 으로 뒤에 붙여서 저장해 return*/
 vector<string>	Block::getValue(vector<string>::iterator& word)
 {
 	vector<string>	value;
@@ -24,4 +24,8 @@ void	Block::printDirectives()
 		}
 		cout << endl;
 	}
+}
+
+string	Block::getLocation() {
+	return (location);
 }

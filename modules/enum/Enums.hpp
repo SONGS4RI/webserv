@@ -21,4 +21,9 @@ enum EChunkedStatus {
 	CRLF
 };
 
+enum EConfigType {
+	SERVER_CONFIG,
+	LOCATION_CONFIG
+};
+
 #endif

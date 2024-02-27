@@ -13,6 +13,7 @@ class Block {
 		string							location;
 		map<string, vector<string> >	directives;
 		vector<Block>					blocks;
+		string	getLocation();
 		static vector<string>	getValue(vector<string>::iterator& word);
 		void	printDirectives();
 		Block(string _type);

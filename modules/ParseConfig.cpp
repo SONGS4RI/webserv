@@ -1,4 +1,4 @@
-#include "parse_config.hpp"
+#include "ParseConfig.hpp"
 
 /* config 파일을 읽고, 주석을 제거 후 단어와 특수문자 {, }, ; 로 를 순서대로 분리해 vector에 저장한다.
 그리고 지시어는 map<string, vector<string> > 에 저장
@@ -14,10 +14,10 @@ ParseConfig::ParseConfig(const char* configFileName) : charset("{};"), globalBlo
 	} catch(const char * e) {
 		exitWithErrmsg(e);
 	}
-	printAllBlocks();
+	checkBlocksWrong();
+	setServerConfigs();
+	//printAllBlocks();
 }
-
-
 
 /*config 파일 읽고 lawlines에 저장*/
 void	ParseConfig::setLawLines(const char* configFileName)
@@ -59,9 +59,12 @@ bool	ParseConfig::checkWrongSyntaxInConfig() {
 	} else if (isFrontOpenBraceError() == true) {
 		exitWithErrmsg("Error: front of { is wrong");
 	} else if (isFrontCloseBraceError() == true) {
-		exitWithErrmsg("Error: front of { is wrong");
-	} else if (isWordSyntaxError() == true) {
-		exitWithErrmsg("Error: after http/server keyword must be '{'");
+		exitWithErrmsg("Error: front of } is wrong");
+	}
+	try {
+		isWordSyntaxError();
+	} catch (const char * errmsg) {
+		exitWithErrmsg(errmsg);
 	}
 	return (false);
 }
@@ -80,15 +83,15 @@ bool	ParseConfig::isWordSyntaxError() {
 		} else if (isStrInStrset(*it, strset) == false) {
 			back = it + 1;
 			if (back == words.end()) {
-				return (true);
+				throw "Error: configfile syntax error";
 			}
 			if (*back == ";") {
-				return (true);
+				throw "Error: right after directive can't be ';'";
 			}
 			++it;
 			while (1) {
 				if (it == words.end()) {
-					return (true);
+					throw "Error: configfile syntax error";
 				} else if (*it == ";") {
 					break ;
 				}
@@ -98,22 +101,22 @@ bool	ParseConfig::isWordSyntaxError() {
 		else if (*it == "http" || *it == "server") {
 			back = it + 1;
 			if (back == words.end()) {
-				return (true);
+				throw "Error: right after 'http/server' keyword must be '{'";
 			} else if (*back != "{") {
-				return (true);
+				throw "Error: right after 'http/server' keyword must be '{'";
 			}
 		} else if (*it == "location") {
 			back = it + 1;
 			if (back == words.end()) {
-				return (true);
+				throw "Error: right after 'location' keyword must be location";
 			}
 			backback = back + 1;
 			if (backback == words.end()) {
-				return (true);
+				throw "Error: after location must be '{'";
 			} else if (back->size() == 1 && isCharInCharset((*back)[0], charset) == true) {
-				return (true);
+				throw "Error: right after 'location' keyword must be location";
 			} else if (*backback != "{") {
-				return (true);
+				throw "Error: after location must be '{'";
 			}
 		}
 	}
@@ -251,11 +254,18 @@ bool	ParseConfig::isSkipBlock(vector<string>::iterator it)
 }
 
 /*블록을 스킵하는 함수*/
-vector<string>::iterator	ParseConfig::skipThisBlock(vector<string>::iterator it) {
-	while (*it != "}") {
-		++it;
+vector<string>::iterator	ParseConfig::skipThisBlock(vector<string>::iterator word) {
+	int	depth = 0;
+
+	while (*word != "}" || depth != 1) {
+		if (*word == "{") {
+			depth++;
+		} else if (*word == "}") {
+			depth--;
+		}
+		++word;
 	}
-	return (it);
+	return (word);
 }
 
 /*Location 의 주소를 저장하고 { 위치의 iterator를 return*/
@@ -333,4 +343,22 @@ void	ParseConfig::deleteComment() {
 			lawLines[i].erase(pos);
 		}
 	}
+}
+
+void	ParseConfig::checkBlocksWrong() {
+	if (globalBlock.blocks.size() != 1) {
+		exitWithErrmsg("Error: http block is not 1 in config file");
+	} else if (globalBlock.blocks[0].blocks.size() < 1) {
+		exitWithErrmsg("Error: no server block in config file");
+	}
+}
+
+void	ParseConfig::setServerConfigs() {
+	for (size_t i = 0; i < globalBlock.blocks[0].blocks.size(); i++) {
+		serverConfigs.push_back(Config(globalBlock, globalBlock.blocks[0].blocks[i]));
+	}
+}
+
+vector<Config>&	ParseConfig::getServerConfigs() {
+	return (serverConfigs);
 }
