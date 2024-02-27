@@ -40,7 +40,10 @@ class Request {
 		bool checkCRLF();
 		void checkHeaderLineBlock(const string& key, istringstream& iss);
 		void readRestHttpMessage();
-		void handleParsedRequest();
+
+		const ERequestStatus& getStatus() const;
+		const map<string, string>& getProperties() const;
+		const RequestBody& getBody() const;
 };
 
 #endif

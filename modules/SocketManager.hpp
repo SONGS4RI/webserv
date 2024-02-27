@@ -2,7 +2,7 @@
 #ifndef SOCKETMANAGER_HPP
 #define SOCKETMANAGER_HPP
 
-#include <vector>
+#include <list>
 #include <map>
 
 #include "Server.hpp"
@@ -13,8 +13,8 @@ using namespace std;
 class SocketManager {
 	private:
 		static SocketManager* sm;
-		vector<Server> servers;
-		vector<Client> clients;
+		list<Server> servers;
+		list<Client> clients;
 
 		SocketManager(/* args */);
 	public:
@@ -24,7 +24,7 @@ class SocketManager {
 		void initServerSocket(const vector<Config>& serverConfigs);
 		bool isServerSocket(const int& ident);
 		void disconnect_client(const int& clientIdent);
-		Client& getClient(const int& clientIdent);
+		const Client& getClient(const int& clientIdent);
 };
 
 #endif
