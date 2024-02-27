@@ -13,8 +13,10 @@ class Client {
 		deque<Response> responses;
 		int socket;
 	public:
-		Client(/* args */);
+		Client();
+		Client(const Client& obj);
 		~Client();
+		Client& operator=(const Client& obj);
 
 		Request* getCurReqeust();
 		Response* getCurResponse();

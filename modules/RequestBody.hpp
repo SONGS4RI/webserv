@@ -15,7 +15,10 @@ class RequestBody {
 		EChunkedStatus chunkedStatus;
 		string body;
 	public:
+		RequestBody();
 		~RequestBody();
+		RequestBody(const RequestBody& obj);
+		const RequestBody& operator=(const RequestBody& obj);
 		void init(const string& contentType, const size_t& contentLength);
 
 		const string& getContentType() const;
