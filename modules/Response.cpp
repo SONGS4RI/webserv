@@ -54,9 +54,15 @@ void	Response::writeToSocket(int fd) {
 	}
 }
 
-
+bool	Response::isDone() {
+	if (status == RP_DONE) {
+		return (true);
+	}
+	return (false);
+}
 
 Response::~Response(){
+	delete body;
 }
 
 void	Response::setHeader() {

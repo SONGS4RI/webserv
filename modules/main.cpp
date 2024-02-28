@@ -24,8 +24,11 @@ int main(int argc, char** argv) {
 	}
 	string	tmpType("text/plain");
 	string	tmpBody = fileToString("configuration_example/index.html");
-	ResponseBody	tmpRBody(200, tmpType, tmpBody);
-	Response	response(&tmpRBody);
+	ResponseBody*	tmpRBody = new ResponseBody(200, tmpType, tmpBody);
+	Response	response(tmpRBody);
+	cout << response.isDone() << endl;
+	response.writeToSocket(1);
+	cout << response.isDone() << endl;
 	response.writeToSocket(1);
 	
 	//response.printAllInfo();

@@ -19,6 +19,7 @@ class Response {
 		void	setStatusLine(const int& statusCode);
 		void	setHeader();
 	public:
+		bool	isDone();
 		Response(ResponseBody* _body);
 		void	writeToSocket(int fd);
 		EResponseStatus getStatus() {return (status);};
