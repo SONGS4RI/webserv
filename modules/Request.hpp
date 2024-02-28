@@ -19,7 +19,7 @@ class Request {
 		char buf[TMP_SIZE];
 		size_t readenContentLength;
 		string leftOverBuffer;
-		RequestBody body;
+		RequestBody* body;
 		map<string, string> properties;
 		int clientSocketFd;
 		ERequestStatus status;
@@ -43,7 +43,7 @@ class Request {
 
 		const ERequestStatus& getStatus() const;
 		const map<string, string>& getProperties() const;
-		const RequestBody& getBody() const;
+		RequestBody* getBody() const;
 };
 
 #endif

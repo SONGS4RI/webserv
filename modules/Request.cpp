@@ -13,13 +13,15 @@ Request::Request(const int& clientSocketFd) {
 	this->clientSocketFd = clientSocketFd;
 }
 
-Request::~Request() {}
+Request::~Request() {
+	delete body;
+}
 
 void Request::init() {
 	memset(buf, 0, TMP_SIZE);
 	this->readenContentLength = 0;
 	this->leftOverBuffer = "";
-	this->body = RequestBody();
+	this->body = new RequestBody();
 	properties.clear();
 	this->status = START_LINE;
 }
@@ -94,7 +96,7 @@ void Request::parseHeader() {
 		HTTPInfo::isValidHeaderField(properties);
 		status = BODY;
 		size_t contentLength = properties[CONTENT_LENGTH] != "" ? atoi(properties[CONTENT_LENGTH].c_str()) : 0;
-		body.init(properties[CONTENT_TYPE], contentLength);
+		body->init(properties[CONTENT_TYPE], contentLength);
 		cout << "Header DONE\n";
 		return ;
 	}
@@ -123,12 +125,12 @@ void Request::parseHeader() {
 }
 
 void Request::parseDefaultBody() {
-	size_t contentLength = body.getContentLength();
+	size_t contentLength = body->getContentLength();
 	size_t targetLength = contentLength - readenContentLength;
 	cout << "contentLength:" << contentLength << "\n";
 	cout << "targetLength:" << targetLength << "\n";
 	readbuf.read(buf, TMP_SIZE);
-	body.addBody(buf, readbuf.gcount());
+	body->addBody(buf, readbuf.gcount());
 	readenContentLength += readbuf.gcount();
 	cout << "readenContentLength:" << readenContentLength << "\n";
 	if (readenContentLength == contentLength && readbuf.eof()) {
@@ -142,26 +144,26 @@ void Request::parseDefaultBody() {
 
 void Request::parseChunkedBody() {
 	while (!readbuf.eof()) {
-		if (body.getChunkedStatus() == LENGTH) {
+		if (body->getChunkedStatus() == LENGTH) {
 			if (!getLineAndCheckCRLF('\n')) {
 				return ;
 			}
-			body.setChunkedStatus(DATA);
-			body.setContentLength(Utils::hexToDecimal(buf));// int contentLength = hex -> 십진수
-			if (!body.getContentLength()) {
+			body->setChunkedStatus(DATA);
+			body->setContentLength(Utils::hexToDecimal(buf));// int contentLength = hex -> 십진수
+			if (!body->getContentLength()) {
 				status = PARSE_DONE;
 				cout << "Body DONE\n";
 				return ;
 			}
-		} else if (body.getChunkedStatus() == DATA) {
+		} else if (body->getChunkedStatus() == DATA) {
 			if (!getLineAndCheckCRLF('\n')) {
 				return ;
 			}
-			if (readbuf.gcount() - 2 != (long)body.getContentLength()) {
+			if (readbuf.gcount() - 2 != (long)body->getContentLength()) {
 				throw new exception;
 			}
-			body.setChunkedStatus(CRLF);
-			body.addBody(buf, readbuf.gcount() - 2);
+			body->setChunkedStatus(CRLF);
+			body->addBody(buf, readbuf.gcount() - 2);
 			readenContentLength += readbuf.gcount() - 2;
 		} else {// CRLF
 			if (!getLineAndCheckCRLF('\n')) {
@@ -170,7 +172,7 @@ void Request::parseChunkedBody() {
 			if (readbuf.gcount() != 2) {
 				throw new exception;
 			}
-			body.setChunkedStatus(LENGTH);
+			body->setChunkedStatus(LENGTH);
 		}
 	}
 }
@@ -213,7 +215,7 @@ void Request::parseRequest(Client& client) {
 			} else if (status == START_LINE) {
 				parseStartLine();
 			} else if (status == PARSE_DONE) {
-				if (properties[TRANSFER_ENCODING] != CHUNKED && readenContentLength != body.getContentLength()) {// contentLength 있는 경우 없는경우 체크
+				if (properties[TRANSFER_ENCODING] != CHUNKED && readenContentLength != body->getContentLength()) {// contentLength 있는 경우 없는경우 체크
 					throw new exception;
 				}
 				// Response 만들기전 요청 처리
