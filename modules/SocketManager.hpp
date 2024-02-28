@@ -23,7 +23,8 @@ class SocketManager {
 
 		void initServerSocket(const vector<Config>& serverConfigs);
 		bool isServerSocket(const int& ident);
-		void disconnect_client(const int& clientIdent);
+		void disconnectClient(const int& clientIdent);
+		int acceptClient(const int& serverIdent);
 		const Client& getClient(const int& clientIdent);
 };
 
