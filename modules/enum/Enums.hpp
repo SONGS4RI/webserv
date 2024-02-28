@@ -3,9 +3,10 @@
 #define ENUMS_HPP
 
 enum EResponseStatus {
-	WAIT,
-	PROGRESS,
-	DONE
+	RP_STATUS_LINE,
+	RP_HEADER,
+	RP_BODY,
+	RP_DONE
 };
 
 enum ERequestStatus {

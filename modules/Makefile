@@ -4,7 +4,10 @@ SRC = main.cpp\
 	ParseConfig.cpp\
 	Block.cpp\
 	Utils.cpp\
-	Config.cpp
+	Config.cpp\
+	Response.cpp\
+	fortest.cpp\
+	ResponseBody.cpp
 
 
 OBJ = $(SRC:.cpp=.o)

@@ -1,8 +1,11 @@
 #include "ParseConfig.hpp"
 #include "Config.hpp"
-#include "EventManager.hpp"
-#include "SocketManager.hpp"
-#include "Server.hpp"
+#include "Response.hpp"
+#include "ResponseBody.hpp"
+#include "fortest.hpp"
+//#include "EventManager.hpp"
+//#include "SocketManager.hpp"
+//#include "Server.hpp"
 
 using namespace std;
 
@@ -10,21 +13,29 @@ int main(int argc, char** argv) {
 	if (argc != 2) {
 		exitWithErrmsg(string("Error: ") + argv[0] + " [ConfigFile]");
 	}
-	// parse config
+//	SocketManager* sm = SocketManager::getInstance();
+//	EventManager* em = EventManager::getInstance();
 	vector<Config> serverConfigs;
 	try {
 		ParseConfig	parsedConfigFile(argv[1]);
-		
 		serverConfigs = parsedConfigFile.getServerConfigs();
 	} catch(const char* errstr) {
 		exitWithErrmsg(errstr);
 	}
-	for (vector<Config>::iterator it = serverConfigs.begin(); it != serverConfigs.end(); it++) {
-		it->printAllInfo();
-	}
-
-	SocketManager* sm = SocketManager::getInstance();
-	EventManager* em = EventManager::getInstance();
+	string	tmpType("text/plain");
+	string	tmpBody = fileToString("configuration_example/index.html");
+	ResponseBody*	tmpRBody = new ResponseBody(200, tmpType, tmpBody);
+	Response	response(tmpRBody);
+	cout << response.isDone() << endl;
+	response.writeToSocket(1);
+	cout << response.isDone() << endl;
+	response.writeToSocket(1);
+	
+	//response.printAllInfo();
+	// for (vector<Config>::iterator it = serverConfigs.begin(); it != serverConfigs.end(); it++) {
+	// 	it->printAllInfo();
+	// }
+/*	
 	sm->initServerSocket(serverConfigs);
 	int newEvents;
 
@@ -42,4 +53,5 @@ int main(int argc, char** argv) {
 	delete em;
 
 	return (0);
+	*/
 }
