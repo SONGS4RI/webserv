@@ -21,11 +21,12 @@ int main(int argc, char** argv) {
 	} catch(const char* errstr) {
 		exitWithErrmsg(errstr);
 	}
-	string	tmptype("text/plain");
-	string	tmpbody = fileToString("configuration_example/index.html");
-	Response	response(200, tmptype, tmpbody);
+	string	tmpType("text/plain");
+	string	tmpBody = fileToString("configuration_example/index.html");
+	Response	response(200, tmpType, tmpBody);
+	response.writeToSocket(1);
 
-	response.printAllInfo();
+	//response.printAllInfo();
 	// for (vector<Config>::iterator it = serverConfigs.begin(); it != serverConfigs.end(); it++) {
 	// 	it->printAllInfo();
 	// }

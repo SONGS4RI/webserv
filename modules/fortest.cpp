@@ -1,5 +1,4 @@
 #include "fortest.hpp"
-#include <iostream>
 
 string	fileToString(const char* filename) {
 	ifstream	file(filename);

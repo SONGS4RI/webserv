@@ -2,6 +2,7 @@
 #ifndef RESPONSE_HPP
 #define RESPONSE_HPP
 
+#include <unistd.h>
 #include "Utils.hpp"
 #include "./enum/Enums.hpp"
 
@@ -19,6 +20,7 @@ class Response {
 		void	setHeader();
 	public:
 		Response(int statusCode, const string& _contentsType, const string& _body);
+		void	writeToSocket(int fd);
 		void	printAllInfo();
 		~Response();		
 };

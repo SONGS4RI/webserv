@@ -7,6 +7,15 @@ Response::Response(int statusCode, const string& _contentsType, const string& _b
 	setHeader();
 }
 
+void	Response::writeToSocket(int fd) {
+	write(fd, statusLine.c_str(), statusLine.size());
+	write(fd, header.c_str(), header.size());
+	if (body.size() > 0) {
+		write(fd, "\r\n", 2);
+		write(fd, body.c_str(), body.size());
+	}
+}
+
 Response::~Response(){
 }
 
@@ -15,7 +24,7 @@ void	Response::setHeader() {
 	header += "Content-Type: ";
 	header += contentType + "\r\n";
 	header += "Content-Length: ";
-	header += intToString(contentLength) + "\r\n\r\n";
+	header += intToString(contentLength) + "\r\n";
 }
 
 void	Response::setStatusLine(int& statusCode) {
