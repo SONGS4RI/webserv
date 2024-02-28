@@ -10,7 +10,7 @@
 class Client {
 	private:
 		Request request;
-		deque<Response> responses;
+		Response responses;
 		int socket;
 	public:
 		Client();
