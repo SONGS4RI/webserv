@@ -1,33 +1,73 @@
 
 #include "Response.hpp"
+#include "Config.hpp"
 
-Response::Response(int statusCode, const string& _contentsType, const string& _body) :
-	statusLine("HTTP/1.1 "), header(""), body(_body), contentType(_contentsType), contentLength(_body.size()){
-	setStatusLine(statusCode);
-	setHeader();
+Response::Response(ResponseBody* _body) :
+ status(RP_STATUS_LINE), nextIdx(0) , statusLine("HTTP/1.1 "), body(_body){
+	setStatusLine(_body->getStatusCode());
+	if (_body != NULL){
+		setHeader();
+	}
 }
 
 void	Response::writeToSocket(int fd) {
-	write(fd, statusLine.c_str(), statusLine.size());
-	write(fd, header.c_str(), header.size());
-	if (body.size() > 0) {
-		write(fd, "\r\n", 2);
-		write(fd, body.c_str(), body.size());
+	size_t	writeAmount;
+	size_t	writtenLength = 0;
+	
+	while (BUF_SIZE > writtenLength && status != RP_DONE) {
+		switch (status) {
+			case RP_STATUS_LINE:
+				writeAmount = (statusLine.size() - nextIdx < BUF_SIZE - writtenLength ? statusLine.size() - nextIdx : BUF_SIZE - writtenLength);
+				write(fd, &statusLine[nextIdx], writeAmount);
+				nextIdx += writeAmount;
+				writtenLength += writeAmount;
+				if (nextIdx == statusLine.size()) {
+					status = RP_HEADER;
+					nextIdx = 0;
+				}
+				break;
+			case RP_HEADER:
+				writeAmount = (header.size() - nextIdx < BUF_SIZE - writtenLength ? header.size() - nextIdx : BUF_SIZE - writtenLength);
+				write(fd, &header[nextIdx], writeAmount);
+				nextIdx += writeAmount;
+				writtenLength += writeAmount;
+				if (nextIdx == header.size()) {
+					status = RP_BODY;
+					nextIdx = 0;
+				}
+				break;
+			case RP_BODY:
+				writeAmount = (body->getBody().size() - nextIdx < BUF_SIZE - writtenLength ? body->getBody().size() - nextIdx : BUF_SIZE - writtenLength);
+				write(fd, &body->getBody()[nextIdx], writeAmount);
+				nextIdx += writeAmount;
+				writtenLength += writeAmount;
+				if (nextIdx == body->getBody().size()) {
+					status = RP_DONE;
+					nextIdx = 0;
+				}
+				break;
+			case RP_DONE:
+				break ;
+			default:
+				break;
+		}
 	}
 }
+
+
 
 Response::~Response(){
 }
 
 void	Response::setHeader() {
-	header.resize(100);
+	header.reserve(200);
 	header += "Content-Type: ";
-	header += contentType + "\r\n";
+	header += body->getContentType() + "\r\n";
 	header += "Content-Length: ";
-	header += intToString(contentLength) + "\r\n";
+	header += intToString(body->getContentLength()) + "\r\n\r\n";
 }
 
-void	Response::setStatusLine(int& statusCode) {
+void	Response::setStatusLine(const int& statusCode) {
 	statusLine += intToString(statusCode);
 	switch (statusCode) {
 	case 100:
@@ -140,10 +180,4 @@ void	Response::setStatusLine(int& statusCode) {
 	default:
 		break;
 	}
-}
-
-void	Response::printAllInfo() {
-	cout << statusLine;
-	cout << header;
-	cout << body << endl;
 }

@@ -6,7 +6,8 @@ SRC = main.cpp\
 	Utils.cpp\
 	Config.cpp\
 	Response.cpp\
-	fortest.cpp
+	fortest.cpp\
+	ResponseBody.cpp
 
 
 OBJ = $(SRC:.cpp=.o)

@@ -1,6 +1,7 @@
 #include "ParseConfig.hpp"
 #include "Config.hpp"
 #include "Response.hpp"
+#include "ResponseBody.hpp"
 #include "fortest.hpp"
 //#include "EventManager.hpp"
 //#include "SocketManager.hpp"
@@ -23,9 +24,10 @@ int main(int argc, char** argv) {
 	}
 	string	tmpType("text/plain");
 	string	tmpBody = fileToString("configuration_example/index.html");
-	Response	response(200, tmpType, tmpBody);
+	ResponseBody	tmpRBody(200, tmpType, tmpBody);
+	Response	response(&tmpRBody);
 	response.writeToSocket(1);
-
+	
 	//response.printAllInfo();
 	// for (vector<Config>::iterator it = serverConfigs.begin(); it != serverConfigs.end(); it++) {
 	// 	it->printAllInfo();
