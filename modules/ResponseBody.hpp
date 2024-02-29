@@ -5,31 +5,45 @@
 #include <string>
 
 #include "./enum/Enums.hpp"
+#include "StatusCode.hpp"
 
 using namespace std;
 
 class ResponseBody {
 	private:
-		size_t statusCode;
+		StatusCode statusCode;
 		string contentType;
 		size_t contentLength;
 		string body;
+		ResponseBody();
 	public:
-		//ResponseBody();
-		ResponseBody(size_t code, string _type, string _body);
-		//~ResponseBody();
-		//ResponseBody(const ResponseBody& obj);
-		// const ResponseBody& operator=(const ResponseBody& obj);
-		// void init(const string& contentType, const size_t& contentLength);
+		ResponseBody(const StatusCode& statusCode);
+		~ResponseBody();
+		ResponseBody(const ResponseBody& obj);
+		const ResponseBody& operator=(const ResponseBody& obj);
 
-		const size_t& getStatusCode() const;
+		const StatusCode& getStatusCode() const;
 		const string& getContentType() const;
 		const size_t& getContentLength() const;
 		const string& getBody() const;
 
-		// void setContentLength(const size_t& contentLength);
-		// void setChunkedStatus(const EChunkedStatus& chunkedStatus);
-		// void addBody(const char* str, const size_t& readCnt);
+        void setStatusCode(const StatusCode& statusCode);
+        void setContentType(const string& contentType);
+        void setContentLength(const size_t& contentLength);
+        void setBody(const char* str, const size_t& readCnt);
 };
 
-#endif
+# endif
+
+/*
+
+메서드 관련 405
+
+GET 200 -> body
+    30X -> 404 html 리다이렉션
+POST 201 -> body X
+    400 -> 잘못된 url
+DELETE 204 -> body X
+    400 -> 잘못된 url
+
+*/

@@ -5,6 +5,7 @@
 #include "Request.hpp"
 #include "HTTPInfo.hpp"
 #include "Utils.hpp"
+#include "StatusCode.hpp"
 
 using namespace std;
 
@@ -13,15 +14,18 @@ Request::Request(const int& clientSocketFd) {
 	this->clientSocketFd = clientSocketFd;
 }
 
-Request::~Request() {}
+Request::~Request() {
+	delete body;
+}
 
 void Request::init() {
 	memset(buf, 0, TMP_SIZE);
 	this->readenContentLength = 0;
 	this->leftOverBuffer = "";
-	this->body = RequestBody();
+	this->body = new RequestBody();
 	properties.clear();
 	this->status = START_LINE;
+	this->statusCode = StatusCode();
 }
 
 bool Request::getLineAndCheckCRLF(const char& deli) {//////////////////////////////////
@@ -39,7 +43,7 @@ bool Request::checkCRLF() {
 	if (readbuf.eof()) {// crlf 로 안 끝났는데, 끝까지 읽은 경우
 		leftOverBuffer = string(buf, readbuf.gcount());
 	} else {
-		throw new exception;// exception 도 할당 해제?
+		throw StatusCode(500, INTERVER_SERVER_ERROR);
 	}
 	return false;
 }
@@ -60,7 +64,7 @@ void Request::parseStartLine() {
 	startLine >> method >> requestUrl >> httpVersion;
 	if (!startLine.eof() || startLine.fail() || buf[method.size()] != ' ' ||
 		buf[method.size() + 1 + requestUrl.size()] != ' ') {// 제대로 된 형식 이 아니라면
-		throw new exception;
+		throw StatusCode(400, BAD_REQUEST);
 	}
 	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion);
 	properties[METHOD] = method;
@@ -75,11 +79,11 @@ void Request::checkHeaderLineBlock(const string& tmpKey, istringstream& block) {
 	keyblock >> key >> rest;
 	// 이미 들어온 키이거나 잘못된 형식
 	if (properties[key].size() || rest.size()) {
-		throw new exception;
+		throw StatusCode(400, BAD_REQUEST);
 	}
 	block >> value >> rest;
 	if (value == "" || rest.size()) {
-		throw new exception;
+		throw StatusCode(400, BAD_REQUEST);
 	}
 	block.clear();
 	block.str(key);
@@ -94,7 +98,7 @@ void Request::parseHeader() {
 		HTTPInfo::isValidHeaderField(properties);
 		status = BODY;
 		size_t contentLength = properties[CONTENT_LENGTH] != "" ? atoi(properties[CONTENT_LENGTH].c_str()) : 0;
-		body.init(properties[CONTENT_TYPE], contentLength);
+		body->init(properties[CONTENT_TYPE], contentLength);
 		cout << "Header DONE\n";
 		return ;
 	}
@@ -123,12 +127,12 @@ void Request::parseHeader() {
 }
 
 void Request::parseDefaultBody() {
-	size_t contentLength = body.getContentLength();
+	size_t contentLength = body->getContentLength();
 	size_t targetLength = contentLength - readenContentLength;
 	cout << "contentLength:" << contentLength << "\n";
 	cout << "targetLength:" << targetLength << "\n";
 	readbuf.read(buf, TMP_SIZE);
-	body.addBody(buf, readbuf.gcount());
+	body->addBody(buf, readbuf.gcount());
 	readenContentLength += readbuf.gcount();
 	cout << "readenContentLength:" << readenContentLength << "\n";
 	if (readenContentLength == contentLength && readbuf.eof()) {
@@ -136,41 +140,41 @@ void Request::parseDefaultBody() {
 		cout << "Body DONE\n";
 	}
 	if (targetLength < 0) {
-		throw new exception;
+		throw StatusCode(400, BAD_REQUEST);
 	}
 }
 
 void Request::parseChunkedBody() {
 	while (!readbuf.eof()) {
-		if (body.getChunkedStatus() == LENGTH) {
+		if (body->getChunkedStatus() == LENGTH) {
 			if (!getLineAndCheckCRLF('\n')) {
 				return ;
 			}
-			body.setChunkedStatus(DATA);
-			body.setContentLength(Utils::hexToDecimal(buf));// int contentLength = hex -> 십진수
-			if (!body.getContentLength()) {
+			body->setChunkedStatus(DATA);
+			body->setContentLength(Utils::hexToDecimal(buf));// int contentLength = hex -> 십진수
+			if (!body->getContentLength()) {
 				status = PARSE_DONE;
 				cout << "Body DONE\n";
 				return ;
 			}
-		} else if (body.getChunkedStatus() == DATA) {
+		} else if (body->getChunkedStatus() == DATA) {
 			if (!getLineAndCheckCRLF('\n')) {
 				return ;
 			}
-			if (readbuf.gcount() - 2 != (long)body.getContentLength()) {
-				throw new exception;
+			if (readbuf.gcount() - 2 != (long)body->getContentLength()) {
+				throw StatusCode(400, BAD_REQUEST);
 			}
-			body.setChunkedStatus(CRLF);
-			body.addBody(buf, readbuf.gcount() - 2);
+			body->setChunkedStatus(CRLF);
+			body->addBody(buf, readbuf.gcount() - 2);
 			readenContentLength += readbuf.gcount() - 2;
 		} else {// CRLF
 			if (!getLineAndCheckCRLF('\n')) {
 				return ;
 			}
 			if (readbuf.gcount() != 2) {
-				throw new exception;
+				throw StatusCode(400, BAD_REQUEST);
 			}
-			body.setChunkedStatus(LENGTH);
+			body->setChunkedStatus(LENGTH);
 		}
 	}
 }
@@ -213,14 +217,14 @@ void Request::parseRequest(Client& client) {
 			} else if (status == START_LINE) {
 				parseStartLine();
 			} else if (status == PARSE_DONE) {
-				if (properties[TRANSFER_ENCODING] != CHUNKED && readenContentLength != body.getContentLength()) {// contentLength 있는 경우 없는경우 체크
-					throw new exception;
+				if (properties[TRANSFER_ENCODING] != CHUNKED && readenContentLength != body->getContentLength()) {// contentLength 있는 경우 없는경우 체크
+					throw StatusCode(400, BAD_REQUEST);
 				}
 				// Response 만들기전 요청 처리
 				break ;
 			}
 		}
-	} catch(const std::exception* e) {
-		throw e;
+	} catch(const StatusCode& sc) {
+		statusCode = sc;
 	}
 }

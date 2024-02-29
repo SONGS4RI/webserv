@@ -8,24 +8,26 @@
 #include "HTTPInfo.hpp"
 #include "Request.hpp"
 #include "RequestBody.hpp"
-#include "Response.hpp"
+#include "ResponseBody.hpp"
 using namespace std;
 
 class RequestHandler {
 	private:
 		string method;
 		string requestUrl;
-		RequestBody body;
+		RequestBody* requestbody;
+		ResponseBody* responseBody;
 		char buf[1024];// 동적인 것으로 변경
 		void checkResource() const;
 		void handleGet();
 		void handleDelete();
 		void handlePost();
+		void handleError(const StatusCode& statusCode);
 	public:
-		RequestHandler(const Request& request);
+		RequestHandler(const Request* request);
 		~RequestHandler();
 
-		Response& handleRequest();
+		ResponseBody* handleRequest();
 };
 
 #endif
