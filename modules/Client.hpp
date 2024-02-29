@@ -9,8 +9,8 @@
 
 class Client {
 	private:
-		Request request;
-		Response responses;
+		Request *request;
+		Response *responses;
 		int socket;
 	public:
 		Client();

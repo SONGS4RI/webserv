@@ -27,6 +27,7 @@ class Request {
 		StatusCode statusCode;
 		istringstream readbuf;
 	public:
+		Request();
 		Request(const int& clientSocketFd);
 		~Request();
 

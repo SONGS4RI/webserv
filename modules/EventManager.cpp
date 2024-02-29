@@ -43,15 +43,15 @@ void EventManager::handleEvent(const int& eventIdx) {
 		cerr << "client socket error" << endl;
 		sm->disconnectClient(curEvent->ident);
 	} else if (curEvent->flags ==  EVFILT_READ) {// 읽기
+		Client client = sm->getClient(curEvent->ident);
 		if (sm->isServerSocket(curEvent->ident)) {
 			// 새로운 클라이언트 등록 및 read 이벤트 생성
 			// sm->clients.push_back(Client());
 			int clientSocket = sm->acceptClient(curEvent->ident);
 			addEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 		} else if (curEvent->udata == NULL) {
-			Client client = sm->getClient(curEvent->ident);
 			// 클라이언트의 처리 상태에 따라 이벤트 처리
-			Request* request = client.getCurReqeust();
+			Request* request = client.getCurReqeust();// NULL 이면 할당해서 주기
 			request->parseRequest(client);
 			if (request->getStatus() == PARSE_DONE || request->getStatusCode().getStatusCode() >= 400) {
 				changeEvent(curEvent, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, request);
@@ -60,7 +60,8 @@ void EventManager::handleEvent(const int& eventIdx) {
 			Request* request = (Request *)curEvent->udata;
 			RequestHandler requestHandler = RequestHandler(request);
 			ResponseBody* responseBody = requestHandler.handleRequest();
-			changeEvent(curEvent, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, responseBody);
+			// client->setResponse(responseBody);
+			// changeEvent(curEvent, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, client->getResponse());
 		}
 	} else if (curEvent->flags ==  EVFILT_WRITE) {// 쓰기
 		/*
