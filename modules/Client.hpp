@@ -6,12 +6,12 @@
 
 #include "Request.hpp"
 #include "Response.hpp"
-
+//생성자에서 fcntl 실패했을 경우 
 class Client {
 	private:
 		Request *request;
-		Response *responses;
-		int socket;
+		Response *response;
+		int clientSocket;
 	public:
 		Client();
 		Client(const Client& obj);
