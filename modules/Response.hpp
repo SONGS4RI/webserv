@@ -16,7 +16,8 @@ class Response {
 		string			statusLine;
 		string			header;
 		ResponseBody*	body;
-		void	setStatusLine(const int& statusCode);
+		
+		void	setStatusLine(const StatusCode& statusCode);
 		void	setHeader();
 	public:
 		bool	isDone();
