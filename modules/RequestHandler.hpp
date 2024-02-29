@@ -22,7 +22,7 @@ class RequestHandler {
 		void handleGet();
 		void handleDelete();
 		void handlePost();
-		void handleError(const size_t& statusCode);
+		void handleError(const StatusCode& statusCode);
 	public:
 		RequestHandler(const Request* request);
 		~RequestHandler();

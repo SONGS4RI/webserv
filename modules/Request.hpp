@@ -11,6 +11,7 @@
 #include "Client.hpp"
 #include "RequestBody.hpp"
 #include "./enum/Enums.hpp"
+#include "StatusCode.hpp"
 
 #define TMP_SIZE 1024////config max body size로 교체해야함
 
@@ -23,6 +24,7 @@ class Request {
 		map<string, string> properties;
 		int clientSocketFd;
 		ERequestStatus status;
+		StatusCode statusCode;
 		istringstream readbuf;
 	public:
 		Request(const int& clientSocketFd);
@@ -44,6 +46,7 @@ class Request {
 		const ERequestStatus& getStatus() const;
 		const map<string, string>& getProperties() const;
 		RequestBody* getBody() const;
+		const StatusCode& getStatusCode() const;
 };
 
 #endif

@@ -2,9 +2,13 @@
 
 ResponseBody::ResponseBody() {}
 
+ResponseBody::ResponseBody(const StatusCode& statusCode) {
+	this->statusCode = statusCode;
+}
+
 ResponseBody::~ResponseBody() {}
 
-const size_t& ResponseBody::getStatusCode() const {
+const StatusCode& ResponseBody::getStatusCode() const {
 	return statusCode;
 }
 const string& ResponseBody::getContentType() const {
@@ -19,7 +23,7 @@ const string& ResponseBody::getBody() const {
 	return body;
 }
 
-void ResponseBody::setStatusCode(const size_t& statusCode) {
+void ResponseBody::setStatusCode(const StatusCode& statusCode) {
 	this->statusCode = statusCode;
 }
 

@@ -1,7 +1,7 @@
 #include "EventManager.hpp"
 #include "SocketManager.hpp"
 #include "RequestHandler.hpp"
-
+#include "StatusCode.hpp"
 static EventManager* ev = NULL;
 
 EventManager::EventManager() {
@@ -53,7 +53,7 @@ void EventManager::handleEvent(const int& eventIdx) {
 			// 클라이언트의 처리 상태에 따라 이벤트 처리
 			Request* request = client.getCurReqeust();
 			request->parseRequest(client);
-			if (request->getStatus() == PARSE_DONE) {
+			if (request->getStatus() == PARSE_DONE || request->getStatusCode().getStatusCode() >= 400) {
 				changeEvent(curEvent, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, request);
 			}
 		} else {

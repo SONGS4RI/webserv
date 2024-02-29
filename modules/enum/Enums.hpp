@@ -13,7 +13,8 @@ enum ERequestStatus {
 	START_LINE,
 	HEADER,
 	BODY,
-	PARSE_DONE
+	PARSE_DONE,
+	ERROR
 };
 
 enum EChunkedStatus {

@@ -5,6 +5,7 @@
 #include "Request.hpp"
 #include "HTTPInfo.hpp"
 #include "Utils.hpp"
+#include "StatusCode.hpp"
 
 using namespace std;
 
@@ -24,6 +25,7 @@ void Request::init() {
 	this->body = new RequestBody();
 	properties.clear();
 	this->status = START_LINE;
+	this->statusCode = StatusCode();
 }
 
 bool Request::getLineAndCheckCRLF(const char& deli) {//////////////////////////////////
@@ -41,7 +43,7 @@ bool Request::checkCRLF() {
 	if (readbuf.eof()) {// crlf 로 안 끝났는데, 끝까지 읽은 경우
 		leftOverBuffer = string(buf, readbuf.gcount());
 	} else {
-		throw new exception;// exception 도 할당 해제?
+		throw StatusCode(500, INTERVER_SERVER_ERROR);
 	}
 	return false;
 }
@@ -62,7 +64,7 @@ void Request::parseStartLine() {
 	startLine >> method >> requestUrl >> httpVersion;
 	if (!startLine.eof() || startLine.fail() || buf[method.size()] != ' ' ||
 		buf[method.size() + 1 + requestUrl.size()] != ' ') {// 제대로 된 형식 이 아니라면
-		throw new exception;
+		throw StatusCode(400, BAD_REQUEST);
 	}
 	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion);
 	properties[METHOD] = method;
@@ -77,11 +79,11 @@ void Request::checkHeaderLineBlock(const string& tmpKey, istringstream& block) {
 	keyblock >> key >> rest;
 	// 이미 들어온 키이거나 잘못된 형식
 	if (properties[key].size() || rest.size()) {
-		throw new exception;
+		throw StatusCode(400, BAD_REQUEST);
 	}
 	block >> value >> rest;
 	if (value == "" || rest.size()) {
-		throw new exception;
+		throw StatusCode(400, BAD_REQUEST);
 	}
 	block.clear();
 	block.str(key);
@@ -138,7 +140,7 @@ void Request::parseDefaultBody() {
 		cout << "Body DONE\n";
 	}
 	if (targetLength < 0) {
-		throw new exception;
+		throw StatusCode(400, BAD_REQUEST);
 	}
 }
 
@@ -160,7 +162,7 @@ void Request::parseChunkedBody() {
 				return ;
 			}
 			if (readbuf.gcount() - 2 != (long)body->getContentLength()) {
-				throw new exception;
+				throw StatusCode(400, BAD_REQUEST);
 			}
 			body->setChunkedStatus(CRLF);
 			body->addBody(buf, readbuf.gcount() - 2);
@@ -170,7 +172,7 @@ void Request::parseChunkedBody() {
 				return ;
 			}
 			if (readbuf.gcount() != 2) {
-				throw new exception;
+				throw StatusCode(400, BAD_REQUEST);
 			}
 			body->setChunkedStatus(LENGTH);
 		}
@@ -216,13 +218,13 @@ void Request::parseRequest(Client& client) {
 				parseStartLine();
 			} else if (status == PARSE_DONE) {
 				if (properties[TRANSFER_ENCODING] != CHUNKED && readenContentLength != body->getContentLength()) {// contentLength 있는 경우 없는경우 체크
-					throw new exception;
+					throw StatusCode(400, BAD_REQUEST);
 				}
 				// Response 만들기전 요청 처리
 				break ;
 			}
 		}
-	} catch(const std::exception* e) {
-		throw e;
+	} catch(const StatusCode& sc) {
+		statusCode = sc;
 	}
 }

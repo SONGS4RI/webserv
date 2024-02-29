@@ -5,14 +5,19 @@
 #include "RequestHandler.hpp"
 
 RequestHandler::RequestHandler(const Request* request) {
-	this->method = request->getProperties().find(METHOD)->second;
-	this->requestUrl = request->getProperties().find(REQUEST_URL)->second;
-	this->requestbody = request->getBody();
-	this->responseBody = new ResponseBody();
+	if (request->getStatus() != ERROR) {
+		this->method = request->getProperties().find(METHOD)->second;
+		this->requestUrl = request->getProperties().find(REQUEST_URL)->second;
+		this->requestbody = request->getBody();
+	}
+	this->responseBody = new ResponseBody(request->getStatusCode());
 }
 
 ResponseBody* RequestHandler::handleRequest() {
 	try {
+		if (responseBody->getStatusCode().getStatusCode() >= 400) {
+			throw responseBody->getStatusCode();
+		}
 		checkResource();
 		if (method == GET) {
 			handleGet();
@@ -23,7 +28,7 @@ ResponseBody* RequestHandler::handleRequest() {
 		} else {// POST
 			handlePost();
 		}
-	} catch(const size_t& statusCode) {
+	} catch(const StatusCode& statusCode) {
 		// Handle error
 		handleError(statusCode);
 	}
@@ -34,10 +39,10 @@ void RequestHandler::handleGet() {
 	int fd = open(requestUrl.c_str(), O_RDONLY);
 	int n = read(fd, buf, sizeof(buf));
 	if (n < 0) {
-		handleError(500);
+		handleError(StatusCode(500, INTERVER_SERVER_ERROR));
 		return ;
 	}
-	responseBody->setStatusCode(200);
+	responseBody->setStatusCode(StatusCode(200, OK));
 	responseBody->setContentType(requestbody->getContentType());
 	responseBody->setContentLength(n);
 	responseBody->setBody(buf, n);
@@ -45,9 +50,9 @@ void RequestHandler::handleGet() {
 
 void RequestHandler::handleDelete() {
 	if (remove(requestUrl.c_str()) != 0) {
-		throw 405;
+		throw StatusCode(405, FORBIDDEN);
 	}
-	responseBody->setStatusCode(204);
+	responseBody->setStatusCode(StatusCode(204, NO_CONTENT));
 	responseBody->setContentType(requestbody->getContentType());
 }
 
@@ -77,14 +82,14 @@ void RequestHandler::handlePost() {
         outFile.write(requestbody->getBody().c_str(), requestbody->getBody().size());
         outFile.close();
     } else {
-       throw 500;
+       throw StatusCode(500, INTERVER_SERVER_ERROR);
     }
 }
 
-void RequestHandler::handleError(const size_t& statusCode) {
+void RequestHandler::handleError(const StatusCode& statusCode) {
 	responseBody->setStatusCode(statusCode);
 	responseBody->setContentType(TEXT_HTML);
-	string fileName = to_string(statusCode) + ".html";
+	string fileName = to_string(statusCode.getStatusCode()) + ".html";
 	int fd = open(fileName.c_str(), O_RDONLY);
 	int n = read(fd, buf, sizeof(buf));
 	responseBody->setContentLength(n);
@@ -94,11 +99,11 @@ void RequestHandler::handleError(const size_t& statusCode) {
 void RequestHandler::checkResource() const {
 	struct stat buffer;
 	if (stat(requestUrl.c_str(), &buffer) != 0) {
-		throw 404;
+		throw StatusCode(404, NOT_FOUND);
 	}
 
 	if (((method == GET || method == DELETE) && S_ISDIR(buffer.st_mode)) ||
 		(method == POST && !S_ISDIR(buffer.st_mode))) {
-		throw 400;
+		throw StatusCode(400, BAD_REQUEST);
 	}
 }
