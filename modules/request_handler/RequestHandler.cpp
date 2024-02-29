@@ -86,6 +86,12 @@ void RequestHandler::handlePost() {
     }
 }
 
+void RequestHandler::handleCGI() {
+	// 파이브
+
+	
+}
+
 void RequestHandler::handleError(const StatusCode& statusCode) {
 	responseBody->setStatusCode(statusCode);
 	responseBody->setContentType(TEXT_HTML);
@@ -101,9 +107,9 @@ void RequestHandler::checkResource() const {
 	if (stat(requestUrl.c_str(), &buffer) != 0) {
 		throw StatusCode(404, NOT_FOUND);
 	}
-
-	if (((method == GET || method == DELETE) && S_ISDIR(buffer.st_mode)) ||
-		(method == POST && !S_ISDIR(buffer.st_mode))) {
-		throw StatusCode(400, BAD_REQUEST);
-	}
+	// 디렉토리 리스팅 해야함.....
+	// if (((method == GET || method == DELETE) && S_ISDIR(buffer.st_mode)) ||
+	// 	(method == POST && !S_ISDIR(buffer.st_mode))) {
+	// 	throw StatusCode(400, BAD_REQUEST);
+	// }
 }

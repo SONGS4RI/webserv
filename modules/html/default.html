@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTTP Request Sender</title>
+
+<style>
+	.container {
+		top: 10%;
+		text-align: center; /* 컨텐츠를 가운데 정렬합니다 */
+		/* padding-top: 100px; 상단 여백을 줍니다 */
+	}
+	.box {
+    	width: 50%; /* 부모 요소의 80% 너비를 가집니다. */
+		padding: 10px; /* 입력란 안쪽에 여백을 추가합니다. */
+		margin: 10px 0; /* 위아래로 여백을 추가합니다. */
+		font-size: 16px; /* 글꼴 크기를 조절합니다. */
+		border: 1px solid #ccc; /* 경계선 스타일을 설정합니다. */
+		border-radius: 4px; /* 경계선의 모서리를 둥글게 합니다. */
+	}
+	#responseContainer {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 50%; /* 혹은 원하는 너비 */
+		padding: 100px;
+		border: 1px solid #ccc;
+		border-radius: 5px;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+		background-color: white;
+		z-index: 1000;/*다른 요소 위에 표시*/
+	}
+</style>
+
+</head>
+<body>
+  <h2 class="container">HTTP Request Sender</h2>
+  <div class="container">
+    <label for="methodSelect">Method:</label>
+    <select id="methodSelect">
+		<option value="GET">GET</option>
+		<option value="POST">POST</option>
+		<option value="PUT">PUT</option>
+		<option value="DELETE">DELETE</option>
+    </select>
+    <input type="text" id="urlInput" class="box" placeholder="Enter URL">
+	<button onclick="sendRequest()">Send Request</button>
+  </div>
+  <div id="responseContainer"></div>
+
+  <script>
+	function sendRequest() {
+		var url = document.getElementById('urlInput').value;
+		var method = document.getElementById('methodSelect').value;
+		var responseContainer = document.getElementById('responseContainer');
+
+		// AJAX 요청을 생성합니다.
+		var xhr = new XMLHttpRequest();
+		xhr.open(method, url, true);
+		xhr.responseType = 'blob'; // 응답을 Blob 객체로 받기 위한 설정입니다.
+
+		xhr.onload = function () {
+			if (xhr.status >= 200 && xhr.status < 300) {
+			// MIME 타입을 확인합니다.
+			var contentType = xhr.getResponseHeader("Content-Type");
+
+			// 응답이 이미지일 경우
+			if (contentType && contentType.startsWith('image')) {
+				// Blob을 Object URL로 변환합니다.
+				var imageSrc = URL.createObjectURL(xhr.response);
+				// img 태그를 생성하고 src를 설정합니다.
+				responseContainer.innerHTML = '<img src="' + imageSrc + '" style="max-width:1000%;">';
+				responseContainer.style.display = 'block'; // 화면에 표시
+			} else { // 응답이 텍스트일 경우
+				// FileReader를 사용하여 응답을 읽습니다.
+				var reader = new FileReader();
+				reader.onload = function(e) {
+					responseContainer.textContent = e.target.result;
+					responseContainer.style.display = 'block'; // 화면에 표시
+				};
+				reader.readAsText(xhr.response);
+			}
+			} else {
+				console.error('Request failed with status:', xhr.status);
+				alert('Request failed! Status: ' + xhr.status);
+			}
+		};
+
+		xhr.onerror = function () {
+			console.error('Request failed');
+			alert('Request failed!');
+		};
+
+		xhr.send();
+	}
+	</script>
+</body>
+</html>
