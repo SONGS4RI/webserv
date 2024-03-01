@@ -5,7 +5,7 @@
 #include <map>
 #include <vector>
 #include <string>
-#include "./enum/Enums.hpp"
+#include "../utils/Enums.hpp"
 #include "ParseConfig.hpp"
 
 #define BUF_SIZE 1024

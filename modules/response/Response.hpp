@@ -3,9 +3,9 @@
 #define RESPONSE_HPP
 
 #include <unistd.h>
-#include "Utils.hpp"
+#include "../utils/Utils.hpp"
 #include "ResponseBody.hpp"
-#include "./enum/Enums.hpp"
+#include "../utils/Enums.hpp"
 
 using namespace std;
 

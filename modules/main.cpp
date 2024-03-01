@@ -1,9 +1,8 @@
-#include "ParseConfig.hpp"
-#include "Config.hpp"
-#include "Response.hpp"
-#include "ResponseBody.hpp"
-#include "fortest.hpp"
-#include "statusCode/StatusCode.hpp"
+#include "./parseConfig/ParseConfig.hpp"
+#include "./parseConfig/Config.hpp"
+#include "./response/Response.hpp"
+#include "./response/ResponseBody.hpp"
+#include "./utils/StatusCode.hpp"
 //#include "EventManager.hpp"
 //#include "SocketManager.hpp"
 //#include "Server.hpp"
@@ -23,16 +22,6 @@ int main(int argc, char** argv) {
 	} catch(const char* errstr) {
 		exitWithErrmsg(errstr);
 	}
-	string	tmpBody = fileToString("configuration_example/index.html");
-	StatusCode	code(200, OK);
-	ResponseBody*	tmpRBody = new ResponseBody(code);
-	Response	response(tmpRBody);
-	
-	cout << response.isDone() << endl;
-	response.writeToSocket(1);
-	cout << response.isDone() << endl;
-	response.writeToSocket(1);
-	
 	//response.printAllInfo();
 	// for (vector<Config>::iterator it = serverConfigs.begin(); it != serverConfigs.end(); it++) {
 	// 	it->printAllInfo();

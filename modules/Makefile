@@ -1,18 +1,21 @@
 NAME = webserv
 
 SRC = main.cpp\
-	ParseConfig.cpp\
-	Block.cpp\
-	Utils.cpp\
-	Config.cpp\
-	Response.cpp\
-	SocketManager.cpp\
-	Client.cpp\
-	fortest.cpp\
-	ResponseBody.cpp\
-	statusCode/StatusCode.cpp\
-	Server.cpp
-	
+	parseConfig/Config.cpp\
+	parseConfig/ParseConfig.cpp\
+	parseConfig/Block.cpp\
+	request/Request.cpp\
+	request/RequestBody.cpp\
+	response/Response.cpp\
+	response/ResponseBody.cpp\
+	server/SocketManager.cpp\
+	server/EventManager.cpp\
+	server/Server.cpp\
+	server/Client.cpp\
+	utils/StatusCode.cpp\
+	utils/HTTPInfo.cpp\
+	utils/Utils.cpp\
+	RequestHandler.cpp
 
 
 OBJ = $(SRC:.cpp=.o)

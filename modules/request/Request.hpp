@@ -7,11 +7,11 @@
 #include <map>
 #include <sstream>
 
-#include "Config.hpp"
-#include "Client.hpp"
 #include "RequestBody.hpp"
-#include "./enum/Enums.hpp"
-#include "./statusCode/StatusCode.hpp"
+#include "../parseConfig/Config.hpp"
+#include "../server/Client.hpp"
+#include "../utils/Enums.hpp"
+#include "../utils/StatusCode.hpp"
 
 #define TMP_SIZE 1024////config max body size로 교체해야함
 
