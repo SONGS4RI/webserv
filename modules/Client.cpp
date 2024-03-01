@@ -9,6 +9,12 @@ myServer(_server), request(NULL), response(NULL), clientSocket(_clientSocket) {
 }
 
 Client::~Client() {
+	if (request != NULL) {
+		delete request;
+	}
+	if (response != NULL) {
+		delete request;
+	}
 	close(clientSocket);
 }
 
