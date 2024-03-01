@@ -45,13 +45,10 @@ bool SocketManager::isServerSocket(const int& ident) {
 
 /* ident를 받아 클라이언트를 제거하는 함수. close는 Client 클래스의 소멸자로 한다. */
 void SocketManager::disconnectClient(const int& clientIdent) {
-	for (map<int, Server>::iterator sit = servers.begin(); sit != servers.end(); sit++)
-	{
+	for (map<int, Server>::iterator sit = servers.begin(); sit != servers.end(); sit++) {
 		map<int, Client>::iterator cit = sit->second.getClients().find(clientIdent);
 		if (cit != sit->second.getClients().end()) {
 			sit->second.getClients().erase(cit);
-		} else {
-			continue ;
 		}
 	}
 }
@@ -74,14 +71,11 @@ int SocketManager::acceptClient(const int& serverIdent) {
 }
 
 const Client* SocketManager::getClient(const int& clientIdent) {
-	for (map<int, Server>::iterator sit = servers.begin(); sit != servers.end(); sit++)
-	{
+	for (map<int, Server>::iterator sit = servers.begin(); sit != servers.end(); sit++) {
 		map<int, Client>::iterator cit = sit->second.getClients().find(clientIdent);
 
 		if (cit != sit->second.getClients().end()) {
 			return (&(cit->second));
-		} else {
-			continue ;
 		}
 	}
 	return (NULL);
