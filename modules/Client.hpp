@@ -8,6 +8,7 @@
 //생성자에서 fcntl 실패했을 경우 처리해야할듯.
 
 class Server;
+class Request;
 
 class Client {
 	private:
