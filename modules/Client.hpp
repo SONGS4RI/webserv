@@ -16,15 +16,14 @@ class Client {
 		Response *response;
 		int clientSocket;
 	public:
-		Client();
 		Client(int _clientSocket, const Server& _server);
-		Client(const Client& obj);
 		~Client();
-		Client& operator=(const Client& obj);
 
-		Request* getCurReqeust();
-		Response* getCurResponse();
-		void addResponse(Response response);
+		const Server&	getServer() const;
+		Request* getReqeust();
+		Response* getResponse();
+		void addRequest(Request* _request);
+		void addResponse(Response* _response);
 		const int& getSocketFd();
 };
 

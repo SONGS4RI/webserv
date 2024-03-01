@@ -11,3 +11,15 @@ myServer(_server), request(NULL), response(NULL), clientSocket(_clientSocket) {
 Client::~Client() {
 	close(clientSocket);
 }
+
+const Server&	Client::getServer() const { return(myServer);}
+
+Request* Client::getReqeust() { return (request);}
+
+Response* Client::getResponse() { return (response);}
+
+const int& Client::getSocketFd() { return (clientSocket);}
+
+void Client::addRequest(Request* _request) { request = _request;}
+
+void Client::addResponse(Response* _response) { response = _response;}

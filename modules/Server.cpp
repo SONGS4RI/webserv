@@ -5,6 +5,10 @@
 
 Server::Server(const Config& _config) : serverConfig(_config) {}
 
+Server::~Server() {
+	close(serverSocket);
+}
+
 const Config& Server::getServerConfig() const { return (serverConfig);}
 
 const int& Server::getSocketFd() const { return (serverSocket);}

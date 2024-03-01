@@ -1,5 +1,9 @@
 #include "SocketManager.hpp"
 
+SocketManager*	SocketManager::sm = NULL;
+
+vector<Config>	SocketManager::configs;
+
 SocketManager::SocketManager(const vector<Config>& _configs) {
 	for (size_t i = 0; i < _configs.size(); ++i) {
 		servers.push_back(Server(_configs[i]));
