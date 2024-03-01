@@ -4,7 +4,7 @@
 
 #include <string>
 
-#include "../enum/Enums.hpp"
+#include "../utils/Enums.hpp"
 #include "../utils/StatusCode.hpp"
 
 using namespace std;

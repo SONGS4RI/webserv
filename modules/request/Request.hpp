@@ -10,7 +10,7 @@
 #include "RequestBody.hpp"
 #include "../parseConfig/Config.hpp"
 #include "../server/Client.hpp"
-#include "../enum/Enums.hpp"
+#include "../utils/Enums.hpp"
 #include "../utils/StatusCode.hpp"
 
 #define TMP_SIZE 1024////config max body size로 교체해야함
