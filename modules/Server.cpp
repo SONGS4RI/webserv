@@ -3,8 +3,6 @@
 #include <fcntl.h>
 #include "Server.hpp"
 
-Server::Server() {}
-
 Server::Server(const int& _serverSocket, const Config& _config) : serverConfig(_config)
 {
 	init(_serverSocket);

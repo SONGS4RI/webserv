@@ -65,7 +65,11 @@ int SocketManager::acceptClient(const int& serverIdent) {
 	if (clientSocket == -1) {
 		/* 에러 처리 */
 	}
-	servers[serverIdent].addClient(clientSocket);
+	map<int, Server>::iterator sit = servers.find(serverIdent);
+	if (sit == servers.end()) {
+		/* 에러 처리 */
+	}
+	sit->second.addClient(clientSocket);
 	return (clientSocket);
 }
 

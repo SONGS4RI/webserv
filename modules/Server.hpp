@@ -20,7 +20,6 @@ class Server {
 		map<int, Client> clients;
 	public:
 		Server(const int& _serverSocket, const Config& config);
-		Server();
 		~Server();
 		void init(const int& _serverSocket);// config를 바탕으로 서버 소켓관련 함수들 socket(), bind(), listen(), fcntl()
 

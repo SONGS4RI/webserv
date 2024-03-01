@@ -22,11 +22,12 @@ class Client {
 		Client(int _clientSocket, const Server& _server);
 		~Client();
 
+		void setRequest(Request* _request);
+		void setResponse(Response* _response);
+
 		const Server&	getServer() const;
 		Request* getReqeust();
 		Response* getResponse();
-		void addRequest(Request* _request);
-		void addResponse(Response* _response);
 		const int& getSocketFd();
 };
 

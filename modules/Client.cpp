@@ -18,6 +18,10 @@ Client::~Client() {
 	close(clientSocket);
 }
 
+void Client::setRequest(Request* _request) { request = _request;}
+
+void Client::setResponse(Response* _response) { response = _response;}
+
 const Server&	Client::getServer() const { return(myServer);}
 
 Request* Client::getReqeust() { return (request);}
@@ -25,7 +29,3 @@ Request* Client::getReqeust() { return (request);}
 Response* Client::getResponse() { return (response);}
 
 const int& Client::getSocketFd() { return (clientSocket);}
-
-void Client::addRequest(Request* _request) { request = _request;}
-
-void Client::addResponse(Response* _response) { response = _response;}
