@@ -6,7 +6,7 @@
 
 #include "Request.hpp"
 #include "Response.hpp"
-//생성자에서 fcntl 실패했을 경우 
+//생성자에서 fcntl 실패했을 경우 처리해야할듯.
 class Client {
 	private:
 		Request *request;
@@ -14,6 +14,7 @@ class Client {
 		int clientSocket;
 	public:
 		Client();
+		Client(int _clientSocket);
 		Client(const Client& obj);
 		~Client();
 		Client& operator=(const Client& obj);

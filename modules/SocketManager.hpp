@@ -14,6 +14,7 @@ using namespace std;
 class SocketManager {
 	private:
 		static SocketManager* sm;
+		static vector<Config> configs;
 		list<Server> servers;
 		list<Client> clients;
 
@@ -21,12 +22,13 @@ class SocketManager {
 	public:
 		~SocketManager();
 		static SocketManager* getInstance();
+		static void	setConfigs(const vector<Config>& _configs);
 
 		void initServerSocket();
 		bool isServerSocket(const int& ident);
-		//void disconnectClient(const int& clientIdent);
-		//int acceptClient(const int& serverIdent);
-		//const Client& getClient(const int& clientIdent);
+		void disconnectClient(const int& clientIdent);
+		int acceptClient(const int& serverIdent);
+		const Client* getClient(const int& clientIdent);
 };
 
 #endif

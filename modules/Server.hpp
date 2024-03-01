@@ -3,7 +3,7 @@
 #define SERVER_HPP
 
 #include <sys/socket.h>
-#include <netinet/in.h>
+
 #include <queue>
 
 #include "Config.hpp"
