@@ -4,7 +4,7 @@
 
 #include <string>
 
-#include "./enum/Enums.hpp"
+#include "../enum/Enums.hpp"
 
 using namespace std;
 

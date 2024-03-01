@@ -7,7 +7,7 @@
 
 #include "Server.hpp"
 #include "Client.hpp"
-#include "Utils.hpp"
+#include "../utils/Utils.hpp"
 
 using namespace std;
 

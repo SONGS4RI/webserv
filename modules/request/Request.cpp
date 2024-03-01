@@ -3,9 +3,9 @@
 #include <iostream>
 
 #include "Request.hpp"
-#include "HTTPInfo.hpp"
-#include "Utils.hpp"
-#include "StatusCode.hpp"
+#include "../utils/HTTPInfo.hpp"
+#include "../utils/Utils.hpp"
+#include "../utils/StatusCode.hpp"
 
 using namespace std;
 

@@ -13,7 +13,7 @@ Client::~Client() {
 		delete request;
 	}
 	if (response != NULL) {
-		delete request;
+		delete response;
 	}
 	close(clientSocket);
 }

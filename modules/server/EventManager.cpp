@@ -1,7 +1,7 @@
 #include "EventManager.hpp"
 #include "SocketManager.hpp"
-#include "RequestHandler.hpp"
-#include "StatusCode.hpp"
+#include "../RequestHandler.hpp"
+#include "../utils/StatusCode.hpp"
 static EventManager* ev = NULL;
 
 EventManager::EventManager() {

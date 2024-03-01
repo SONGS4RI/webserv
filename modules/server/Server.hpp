@@ -5,9 +5,9 @@
 #include <sys/socket.h>
 #include <map>
 
-#include "Config.hpp"
-#include "Utils.hpp"
 #include "Client.hpp"
+#include "../parseConfig/Config.hpp"
+#include "../utils/Utils.hpp"
 
 using namespace std;
 
