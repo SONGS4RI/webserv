@@ -4,6 +4,7 @@
 
 #include <list>
 #include <map>
+#include <vector>
 
 #include "Server.hpp"
 #include "Client.hpp"
@@ -16,16 +17,16 @@ class SocketManager {
 		list<Server> servers;
 		list<Client> clients;
 
-		SocketManager(/* args */);
+		SocketManager(const vector<Config>& _configs);
 	public:
-		~SocketManager();// 동적할당 해제해야함
+		~SocketManager();
 		static SocketManager* getInstance();
 
-		void initServerSocket(const vector<Config>& serverConfigs);
+		void initServerSocket();
 		bool isServerSocket(const int& ident);
-		void disconnectClient(const int& clientIdent);
-		int acceptClient(const int& serverIdent);
-		const Client& getClient(const int& clientIdent);
+		//void disconnectClient(const int& clientIdent);
+		//int acceptClient(const int& serverIdent);
+		//const Client& getClient(const int& clientIdent);
 };
 
 #endif

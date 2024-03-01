@@ -17,30 +17,16 @@ class StatusCode {
 		size_t statusCode;
 		string message;
 	public:
-		StatusCode() {
-			statusCode = 0;
-			message = "";
-		}
-		StatusCode(const StatusCode& obj) {
-			*this = obj;
-		}
+		StatusCode();
+		StatusCode(const StatusCode& obj);
 
-		const StatusCode& operator=(const StatusCode& obj) {
-			if (this != &obj) {
-				statusCode = obj.getStatusCode();
-				message = obj.getMessage();
-			}
-		}
+		const StatusCode& operator=(const StatusCode& obj);
 
 		StatusCode(const size_t& statusCode, const string& message);
 
-		const size_t& getStatusCode() const {
-			return statusCode;
-		}
+		const size_t& getStatusCode() const;
 
-		const string& getMessage() const {
-			return message;
-		}
+		const string& getMessage() const;
 };
 
 #endif
