@@ -6,8 +6,13 @@ SRC = main.cpp\
 	Utils.cpp\
 	Config.cpp\
 	Response.cpp\
+	SocketManager.cpp\
+	Client.cpp\
 	fortest.cpp\
-	ResponseBody.cpp
+	ResponseBody.cpp\
+	statusCode/StatusCode.cpp\
+	Server.cpp
+	
 
 
 OBJ = $(SRC:.cpp=.o)

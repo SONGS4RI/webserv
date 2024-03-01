@@ -3,6 +3,7 @@
 #include "Response.hpp"
 #include "ResponseBody.hpp"
 #include "fortest.hpp"
+#include "statusCode/StatusCode.hpp"
 //#include "EventManager.hpp"
 //#include "SocketManager.hpp"
 //#include "Server.hpp"
@@ -22,10 +23,11 @@ int main(int argc, char** argv) {
 	} catch(const char* errstr) {
 		exitWithErrmsg(errstr);
 	}
-	string	tmpType("text/plain");
 	string	tmpBody = fileToString("configuration_example/index.html");
-	ResponseBody*	tmpRBody = new ResponseBody(200, tmpType, tmpBody);
+	StatusCode	code(200, OK);
+	ResponseBody*	tmpRBody = new ResponseBody(code);
 	Response	response(tmpRBody);
+	
 	cout << response.isDone() << endl;
 	response.writeToSocket(1);
 	cout << response.isDone() << endl;
