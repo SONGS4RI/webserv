@@ -2,31 +2,32 @@
 #ifndef SOCKETMANAGER_HPP
 #define SOCKETMANAGER_HPP
 
-#include <list>
 #include <map>
 #include <vector>
 
 #include "Server.hpp"
 #include "Client.hpp"
+#include "Utils.hpp"
 
 using namespace std;
 
 class SocketManager {
 	private:
 		static SocketManager* sm;
-		list<Server> servers;
-		list<Client> clients;
+		static vector<Config> configs;
+		map<int, Server> servers;
 
-		SocketManager(const vector<Config>& _configs);
+		SocketManager();
 	public:
 		~SocketManager();
+		static void	setConfigs(const vector<Config>& _configs);
 		static SocketManager* getInstance();
 
-		void initServerSocket();
+		void initServers();
 		bool isServerSocket(const int& ident);
-		//void disconnectClient(const int& clientIdent);
-		//int acceptClient(const int& serverIdent);
-		//const Client& getClient(const int& clientIdent);
+		void disconnectClient(const int& clientIdent);
+		int acceptClient(const int& serverIdent);
+		const Client* getClient(const int& clientIdent);
 };
 
 #endif

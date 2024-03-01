@@ -2,25 +2,32 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include <queue>
-
+#include "Server.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
-//생성자에서 fcntl 실패했을 경우 
+//생성자에서 fcntl 실패했을 경우 처리해야할듯.
+
+using namespace std;
+
+class Server;
+class Request;
+
 class Client {
 	private:
+		const Server&	myServer;
 		Request *request;
 		Response *response;
 		int clientSocket;
 	public:
-		Client();
-		Client(const Client& obj);
+		Client(int _clientSocket, const Server& _server);
 		~Client();
-		Client& operator=(const Client& obj);
 
-		Request* getCurReqeust();
-		Response* getCurResponse();
-		void addResponse(Response response);
+		void setRequest(Request* _request);
+		void setResponse(Response* _response);
+
+		const Server&	getServer() const;
+		Request* getReqeust();
+		Response* getResponse();
 		const int& getSocketFd();
 };
 
