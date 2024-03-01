@@ -10,6 +10,7 @@ Response::Response(ResponseBody* _body) :
 	}
 }
 
+
 void	Response::writeToSocket(int fd) {
 	size_t	writeAmount;
 	size_t	writtenLength = 0;
@@ -64,7 +65,9 @@ bool	Response::isDone() {
 Response::~Response(){
 	delete body;
 }
-
+/* 수정 요망 !!! */
+//확실히 없는경우 204 201 각종 에러일때, POST, DELETE. 리다이렉션 할때 헤더에 로케이션 들어갈 예정.
+//콘텐츠타입, 길이는 GET 200에서만 있음
 void	Response::setHeader() {
 	header.reserve(200);
 	header += "Content-Type: ";

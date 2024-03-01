@@ -4,15 +4,13 @@ SocketManager*	SocketManager::sm = NULL;
 
 vector<Config>	SocketManager::configs;
 
-SocketManager::SocketManager(const vector<Config>& _configs) {
-	for (size_t i = 0; i < _configs.size(); ++i) {
-		servers.push_back(Server(_configs[i]));
-	}
+SocketManager::SocketManager() {
+	initServers();
 }
 
 SocketManager* SocketManager::getInstance() {
 	if (sm == NULL) {
-		sm = new SocketManager(configs);
+		sm = new SocketManager();
 	}
 	return (sm);
 }
@@ -24,31 +22,36 @@ void	SocketManager::setConfigs(const vector<Config>& _configs) {
 SocketManager::~SocketManager() {}
 
 /* server의 config를 바탕으로 서버 소켓관련 함수들 socket(), bind(), listen(), fcntl() */
-void SocketManager::initServerSocket() {
-	for (list<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
-		it->init();
+void SocketManager::initServers() {
+	int	serverSocket;
+	for (size_t i = 0; i < configs.size(); ++i) {
+		serverSocket = socket(PF_INET, SOCK_STREAM, 0);
+		if (serverSocket == -1) {
+			exitWithErrmsg("Error: socket()");
+		}
+		Server	server(serverSocket, configs[i]);
+		
+		servers.insert(make_pair(serverSocket, server));
 	}
 }
 
-/* ident를 받아 서버 list에 일치하는 소켓 있는지 확인하는 함수 */
+/* ident를 받아 servers에 일치하는 소켓 있는지 확인하는 함수 */
 bool SocketManager::isServerSocket(const int& ident) {
-	for (list<Server>::iterator it = servers.begin(); it != servers.end(); it++) {
-		if (it->getSocketFd() == ident) {
-			return (true);
-		}
+	if (servers.find(ident) == servers.end()) {
+		return (false);
 	}
-	return (false);
+	return (true);
 }
 
 /* ident를 받아 클라이언트를 제거하는 함수. close는 Client 클래스의 소멸자로 한다. */
 void SocketManager::disconnectClient(const int& clientIdent) {
-	for (list<Server>::iterator sit = servers.begin(); sit != servers.end(); sit++)
+	for (map<int, Server>::iterator sit = servers.begin(); sit != servers.end(); sit++)
 	{
-		for (list<Client>::iterator cit = sit->getClients().begin(); cit != sit->getClients().end(); cit++) {
-			if (cit->getSocketFd() == clientIdent) {
-				sit->getClients().erase(cit);
-				break ;
-			}
+		map<int, Client>::iterator cit = sit->second.getClients().find(clientIdent);
+		if (cit != sit->second.getClients().end()) {
+			sit->second.getClients().erase(cit);
+		} else {
+			continue ;
 		}
 	}
 }
@@ -62,21 +65,19 @@ int SocketManager::acceptClient(const int& serverIdent) {
 	if (clientSocket == -1) {
 		/* 에러 처리 */
 	}
-	for (list<Server>::iterator sit = servers.begin(); sit != servers.end(); sit++) {
-		if (serverIdent == sit->getSocketFd()) {
-			sit->getClients().push_back(Client(clientSocket, *sit));	
-		}
-	}
+	servers[serverIdent].addClient(clientSocket);
 	return (clientSocket);
 }
 
 const Client* SocketManager::getClient(const int& clientIdent) {
-	for (list<Server>::iterator sit = servers.begin(); sit != servers.end(); sit++)
+	for (map<int, Server>::iterator sit = servers.begin(); sit != servers.end(); sit++)
 	{
-		for (list<Client>::iterator cit = sit->getClients().begin(); cit != sit->getClients().end(); cit++) {
-			if (cit->getSocketFd() == clientIdent) {
-				return (&(*cit));
-			}
+		map<int, Client>::iterator cit = sit->second.getClients().find(clientIdent);
+
+		if (cit != sit->second.getClients().end()) {
+			return (&(cit->second));
+		} else {
+			continue ;
 		}
 	}
 	return (NULL);

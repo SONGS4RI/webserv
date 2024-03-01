@@ -3,26 +3,29 @@
 #define SERVER_HPP
 
 #include <sys/socket.h>
-#include <list>
-#include <queue>
+#include <map>
 
 #include "Config.hpp"
 #include "Utils.hpp"
 #include "Client.hpp"
+
+using namespace std;
 
 class Client;
 
 class Server {
 	private:
 		Config serverConfig;
-		int serverSocket;
-		list<Client> clients;
+		int	serverSocket;
+		map<int, Client> clients;
 	public:
-		Server(const Config& config);
+		Server(const int& _serverSocket, const Config& config);
+		Server();
 		~Server();
-		void init();// config를 바탕으로 서버 소켓관련 함수들 socket(), bind(), listen(), fcntl()
+		void init(const int& _serverSocket);// config를 바탕으로 서버 소켓관련 함수들 socket(), bind(), listen(), fcntl()
 
-		list<Client>&	getClients();
+		map<int, Client>&	getClients();
+		int	addClient(int clientSocket);
 		const Config& getServerConfig() const;
 		const int& getSocketFd() const;
 };
