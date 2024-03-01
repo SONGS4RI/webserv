@@ -16,13 +16,12 @@ class SocketManager {
 		static SocketManager* sm;
 		static vector<Config> configs;
 		list<Server> servers;
-		list<Client> clients;
 
 		SocketManager(const vector<Config>& _configs);
 	public:
 		~SocketManager();
-		static SocketManager* getInstance();
 		static void	setConfigs(const vector<Config>& _configs);
+		static SocketManager* getInstance();
 
 		void initServerSocket();
 		bool isServerSocket(const int& ident);

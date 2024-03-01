@@ -9,6 +9,8 @@ const Config& Server::getServerConfig() const { return (serverConfig);}
 
 const int& Server::getSocketFd() const { return (serverSocket);}
 
+list<Client>&	Server::getClients() { return (clients);}
+
 void Server::init() {
 	serverSocket = socket(PF_INET, SOCK_STREAM, 0);
 	if (serverSocket == -1) {
