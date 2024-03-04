@@ -2,28 +2,22 @@
 
 SocketManager*	SocketManager::sm = NULL;
 
-vector<Config>	SocketManager::configs;
-
-SocketManager::SocketManager() {
-	initServers();
-}
+/* server의 config를 바탕으로 서버 소켓관련 함수들 socket(), bind(), listen(), fcntl() */
+SocketManager::SocketManager() {}
 
 SocketManager* SocketManager::getInstance() {
 	if (sm == NULL) {
-		sm = new SocketManager();
+		try {
+			sm = new SocketManager();
+		} catch (exception& e) {
+			exitWithErrmsg(e.what());
+		}
 	}
 	return (sm);
 }
 
-void	SocketManager::setConfigs(const vector<Config>& _configs) {
-	configs = _configs;
-}
-
-SocketManager::~SocketManager() {}
-
-/* server의 config를 바탕으로 서버 소켓관련 함수들 socket(), bind(), listen(), fcntl() */
-void SocketManager::initServers() {
-	int	serverSocket;
+void	SocketManager::init(vector<Config>& configs) {
+		int	serverSocket;
 	for (size_t i = 0; i < configs.size(); ++i) {
 		serverSocket = socket(PF_INET, SOCK_STREAM, 0);
 		if (serverSocket == -1) {
@@ -34,6 +28,16 @@ void SocketManager::initServers() {
 		servers.insert(make_pair(serverSocket, server));
 	}
 }
+
+void	SocketManager::addClient(int serverSocket, int clientSocket) {
+	Server&	server = this->getServers().find(serverSocket)->second;
+	server.addClient(clientSocket);
+	if (fcntl(clientSocket, F_SETFL, O_NONBLOCK, FD_CLOEXEC) == -1) {
+		throw StatusCode(500, INTERVER_SERVER_ERROR);
+	}
+}
+
+SocketManager::~SocketManager() {}
 
 /* ident를 받아 servers에 일치하는 소켓 있는지 확인하는 함수 */
 bool SocketManager::isServerSocket(const int& ident) {
@@ -60,13 +64,8 @@ int SocketManager::acceptClient(const int& serverIdent) {
 
 	clientSocket = accept(serverIdent, NULL, NULL);
 	if (clientSocket == -1) {
-		/* 에러 처리 */
+		return (-1);
 	}
-	map<int, Server>::iterator sit = servers.find(serverIdent);
-	if (sit == servers.end()) {
-		/* 에러 처리 */
-	}
-	sit->second.addClient(clientSocket);
 	return (clientSocket);
 }
 
@@ -80,3 +79,5 @@ Client* SocketManager::getClient(const int& clientIdent) {
 	}
 	return (NULL);
 }
+
+map<int, Server>& SocketManager::getServers() { return (servers);}

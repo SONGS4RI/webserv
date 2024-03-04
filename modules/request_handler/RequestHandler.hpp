@@ -7,10 +7,10 @@
 #include <fcntl.h>
 #include <dirent.h>
 
-#include "HTTPInfo.hpp"
-#include "Request.hpp"
-#include "RequestBody.hpp"
-#include "ResponseBody.hpp"
+#include "../utils/HTTPInfo.hpp"
+#include "../request/Request.hpp"
+#include "../request/RequestBody.hpp"
+#include "../response/ResponseBody.hpp"
 #include "../server/Client.hpp"
 using namespace std;
 

@@ -4,6 +4,8 @@
 
 #include <map>
 #include <vector>
+#include <fcntl.h>
+
 
 #include "Server.hpp"
 #include "Client.hpp"
@@ -14,20 +16,20 @@ using namespace std;
 class SocketManager {
 	private:
 		static SocketManager* sm;
-		static vector<Config> configs;
 		map<int, Server> servers;
 
-		SocketManager();
 	public:
+		SocketManager();
 		~SocketManager();
-		static void	setConfigs(const vector<Config>& _configs);
+		void	init(vector<Config>& configs);
 		static SocketManager* getInstance();
 
-		void initServers();
 		bool isServerSocket(const int& ident);
+		void	addClient(int serverSocket, int clientSocket);
 		void disconnectClient(const int& clientIdent);
 		int acceptClient(const int& serverIdent);
 		Client* getClient(const int& clientIdent);
+		map<int, Server>& getServers();
 };
 
 #endif

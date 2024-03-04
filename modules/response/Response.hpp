@@ -22,6 +22,7 @@ class Response {
 	public:
 		bool	isDone();
 		Response(ResponseBody* _body);
+		Response(StatusCode errCode);
 		void	writeToSocket(int fd);
 		EResponseStatus getStatus() {return (status);};
 		~Response();

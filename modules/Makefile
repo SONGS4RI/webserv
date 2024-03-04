@@ -15,7 +15,7 @@ SRC = main.cpp\
 	utils/StatusCode.cpp\
 	utils/HTTPInfo.cpp\
 	utils/Utils.cpp\
-	RequestHandler.cpp
+	request_handler/RequestHandler.cpp
 
 
 OBJ = $(SRC:.cpp=.o)

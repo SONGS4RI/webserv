@@ -3,9 +3,8 @@
 #include "./response/Response.hpp"
 #include "./response/ResponseBody.hpp"
 #include "./utils/StatusCode.hpp"
-//#include "EventManager.hpp"
-//#include "SocketManager.hpp"
-//#include "Server.hpp"
+#include "./server/EventManager.hpp"
+#include "./server/SocketManager.hpp"
 
 using namespace std;
 
@@ -13,36 +12,26 @@ int main(int argc, char** argv) {
 	if (argc != 2) {
 		exitWithErrmsg(string("Error: ") + argv[0] + " [ConfigFile]");
 	}
-//	SocketManager* sm = SocketManager::getInstance();
-//	EventManager* em = EventManager::getInstance();
-	vector<Config> serverConfigs;
+
+	SocketManager* sm = SocketManager::getInstance();
+	EventManager* em = EventManager::getInstance();
 	try {
 		ParseConfig	parsedConfigFile(argv[1]);
-		serverConfigs = parsedConfigFile.getServerConfigs();
+		sm->init(parsedConfigFile.getServerConfigs());
 	} catch(const char* errstr) {
 		exitWithErrmsg(errstr);
 	}
-	//response.printAllInfo();
-	// for (vector<Config>::iterator it = serverConfigs.begin(); it != serverConfigs.end(); it++) {
-	// 	it->printAllInfo();
-	// }
-/*	
-	sm->initServerSocket(serverConfigs);
-	int newEvents;
+
+	for (map<int, Server>::iterator sit = sm->getServers().begin(); sit != sm->getServers().end(); sit++) {
+		em->addEvent(sit->first, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+	}
 
 	while (1) {
-		newEvents = em->detectEvent();
-		for (int i=0; i<newEvents; i++) {
-			try {
-				em->handleEvent(i);
-			} catch(const std::exception& e) {
-				std::cerr << e.what() << '\n';
-			}
+		int	newEvents = em->detectEvent();
+		for (int i = 0; i < newEvents; ++i) {
+			em->handleEvent(i);
 		}
 	}
 	delete sm;
 	delete em;
-
-	return (0);
-	*/
 }
