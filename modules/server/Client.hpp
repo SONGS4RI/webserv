@@ -18,17 +18,23 @@ class Client {
 		Request *request;
 		Response *response;
 		int clientSocket;
+		int pipeFd;
+		int pid;
 	public:
 		Client(int _clientSocket, const Server& _server);
 		~Client();
 
 		void setRequest(Request* _request);
 		void setResponse(Response* _response);
+		void setPipeFd(const int& pipeFd);
+		void setPid(const int& pid);
 
 		const Server&	getServer() const;
 		Request* getReqeust();
 		Response* getResponse();
 		const int& getSocketFd();
+		const int& getPipeFd();
+		const int& getPid();
 };
 
 #endif

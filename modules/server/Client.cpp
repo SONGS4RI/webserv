@@ -2,7 +2,7 @@
 #include "Client.hpp"
 
 Client::Client(int _clientSocket, const Server& _server) :
-myServer(_server), request(NULL), response(NULL), clientSocket(_clientSocket) {
+myServer(_server), request(NULL), response(NULL), clientSocket(_clientSocket), pipeFd(-1), pid(-1) {
 	if (fcntl(_clientSocket, F_SETFL, O_NONBLOCK, FD_CLOEXEC) == -1) {
 		/* 에러 처리!!! */
 	}

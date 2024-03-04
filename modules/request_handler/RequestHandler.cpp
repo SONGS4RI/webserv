@@ -3,14 +3,20 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "RequestHandler.hpp"
+#include "../server/EventManager.hpp"
 
-RequestHandler::RequestHandler(const Request* request) {
+RequestHandler::RequestHandler(const Request* request, Client* client) {
 	if (request->getStatus() != ERROR) {
 		this->method = request->getProperties().find(METHOD)->second;
-		this->requestUrl = request->getProperties().find(REQUEST_URL)->second;
-		this->requestbody = request->getBody();
+		this->requestUrl = request->getProperties().find(REQUEST_URL)->second;//서버 루트 url + requestUrl 해주어야함
+		this->requestBody = request->getBody();
+		this->client = client;
 	}
 	this->responseBody = new ResponseBody(request->getStatusCode());
+}
+
+RequestHandler::~RequestHandler() {
+	delete this->responseBody;
 }
 
 ResponseBody* RequestHandler::handleRequest() {
@@ -18,13 +24,19 @@ ResponseBody* RequestHandler::handleRequest() {
 		if (responseBody->getStatusCode().getStatusCode() >= 400) {
 			throw responseBody->getStatusCode();
 		}
+		int status;
+		if (client->getPid() > 0 && waitpid(client->getPid(), &status, WNOHANG) > 0) {
+			handleCgiRead();
+			return responseBody;
+		}
 		checkResource();
 		if (method == GET) {
 			handleGet();
 		} else if (method == DELETE) {
 			handleDelete();
-		} else if (requestbody->getContentType() == MULTIPART_FORM_DATA){// POST
-			// MULTIPART_FORM_DATA CGI
+		} else if (requestBody->getContentType() == MULTIPART_FORM_DATA){// POST
+			handleCgiExecve();
+			return NULL;
 		} else {// POST
 			handlePost();
 		}
@@ -36,16 +48,51 @@ ResponseBody* RequestHandler::handleRequest() {
 }
 
 void RequestHandler::handleGet() {
-	int fd = open(requestUrl.c_str(), O_RDONLY);
-	int n = read(fd, buf, sizeof(buf));
-	if (n < 0) {
-		handleError(StatusCode(500, INTERVER_SERVER_ERROR));
-		return ;
+	if (1/* 디렉토리 리스팅 on */ && isUrlDir) {
+		string resource = /*root + */requestUrl;
+		dirListing(resource, requestUrl);
+	} else if (1/* 디렉토리 리스팅 off */ && isUrlDir) {
+		throw StatusCode(400, BAD_REQUEST);
+	} else {
+		int fd = open(requestUrl.c_str(), O_RDONLY);
+		int n = read(fd, buf, sizeof(buf));
+		if (n < 0) {// max size 보다 클때도 추가
+			handleError(StatusCode(500, INTERVER_SERVER_ERROR));
+			return ;
+		}
+		responseBody->setStatusCode(StatusCode(200, OK));
+		responseBody->setContentType(requestBody->getContentType());
+		responseBody->setContentLength(n);
+		responseBody->setBody(buf, n);
+		close(fd);
 	}
+}
+
+void RequestHandler::dirListing(const string& resource, string& uri) {
+	// html 코드 생성
+	string autoIndexing = "<html><head><meta charset=\"UTF-8\"></head>" \
+    "<style>body { background-color: white; font-family: Trebuchet MS;}</style>" \
+	"<body><h1>" + uri.substr(1) + " List</h1><ul>";
+	if (uri.back() != '/') uri.push_back('/');
+	autoIndexing += "<table>";
+	struct dirent* entry;
+	DIR* dp = opendir(resource.c_str());
+	if (dp != NULL) {
+		while ((entry = readdir(dp))) {
+			string entryName = entry->d_name;
+			string entryPath = uri + entryName;
+			if (entryName.front() == '.') continue;
+			// 상대 경로
+			autoIndexing += "<tr><td><a href='" + entryPath + "'>" + entryName + "</a></td></tr>";
+		}
+		closedir(dp);
+	}
+	autoIndexing += "</table></ul></body></html>";
+	// 응답 body에 써주기
+	responseBody->setBody(autoIndexing.c_str(), autoIndexing.size());
+	responseBody->setContentLength(autoIndexing.size());
+	responseBody->setContentType(TEXT_HTML);
 	responseBody->setStatusCode(StatusCode(200, OK));
-	responseBody->setContentType(requestbody->getContentType());
-	responseBody->setContentLength(n);
-	responseBody->setBody(buf, n);
 }
 
 void RequestHandler::handleDelete() {
@@ -53,18 +100,17 @@ void RequestHandler::handleDelete() {
 		throw StatusCode(405, FORBIDDEN);
 	}
 	responseBody->setStatusCode(StatusCode(204, NO_CONTENT));
-	responseBody->setContentType(requestbody->getContentType());
 }
 
 void RequestHandler::handlePost() {
 	string extension;
-	if (requestbody->getContentType() == APPLICATION_OCTET_STREAM) {
+	if (requestBody->getContentType() == APPLICATION_OCTET_STREAM) {
 		extension = ".bin";
-	} else if (requestbody->getContentType() == IMAGE_PNG) {
+	} else if (requestBody->getContentType() == IMAGE_PNG) {
 		extension = ".png";
-	} else if (requestbody->getContentType() == TEXT_HTML) {
+	} else if (requestBody->getContentType() == TEXT_HTML) {
 		extension = ".html";
-	} else if (requestbody->getContentType() == TEXT_PLAIN) {
+	} else if (requestBody->getContentType() == TEXT_PLAIN) {
 		extension = ".txt";
 	}
 	time_t now = time(0);
@@ -78,18 +124,56 @@ void RequestHandler::handlePost() {
 	string fileName = string(time) + "_" + to_string(randomValue) + extension;
 
     ofstream outFile(fileName.c_str(), std::ios::out | std::ios::binary);
-    if (outFile) {
-        outFile.write(requestbody->getBody().c_str(), requestbody->getBody().size());
-        outFile.close();
-    } else {
-       throw StatusCode(500, INTERVER_SERVER_ERROR);
-    }
+	if (!outFile) {
+		throw StatusCode(500, INTERVER_SERVER_ERROR);
+	}
+	outFile.write(requestBody->getBody().c_str(), requestBody->getBody().size());
+	outFile.close();
+	responseBody->setStatusCode(StatusCode(200, OK));
+	// location 도 responseBody에 추가해주어야 할듯
 }
 
-void RequestHandler::handleCGI() {
-	// 파이브
+void RequestHandler::handleCgiExecve() {
+	int pipefd[2];
+    pid_t pid;
 
-	
+    if (pipe(pipefd) == -1 || (pid = fork()) == -1) {
+        throw StatusCode(500, INTERVER_SERVER_ERROR);
+    }
+
+    if (pid == 0) { // 자식 프로세스
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+
+        char *argv[] = {"/usr/bin/python", "script.py", NULL};
+        char *envp[] = {NULL};
+        execve(argv[0], argv, envp);
+		exit(EXIT_FAILURE);
+    } else { // 부모 프로세스
+        close(pipefd[1]);
+		client->setPipeFd(pipefd[0]);
+		client->setPid(pid);
+		// 현재 이벤트 종료
+		// int n = read(pipefd[0], buf, sizeof(buf));
+        // 파이프의 읽기 끝 닫기
+        // close(pipefd[0]);
+    }
+	// string result(buf);
+	// if (result == "ERROR") {
+	// 	throw StatusCode(500, INTERVER_SERVER_ERROR);
+	// }
+	// location = result;
+}
+
+void RequestHandler::handleCgiRead() {
+	int n = read(client->getPipeFd(), buf, sizeof(buf));
+	string location(buf);
+	if (location == "ERROR") {
+		throw StatusCode(500, INTERVER_SERVER_ERROR);
+	} else {
+		responseBody->setStatusCode(StatusCode(201, CREATED));
+		responseBody->setLocation(location);
+	}
 }
 
 void RequestHandler::handleError(const StatusCode& statusCode) {
@@ -102,14 +186,17 @@ void RequestHandler::handleError(const StatusCode& statusCode) {
 	responseBody->setBody(buf, n);
 }
 
-void RequestHandler::checkResource() const {
+void RequestHandler::checkResource() {
 	struct stat buffer;
 	if (stat(requestUrl.c_str(), &buffer) != 0) {
 		throw StatusCode(404, NOT_FOUND);
 	}
 	// 디렉토리 리스팅 해야함.....
-	// if (((method == GET || method == DELETE) && S_ISDIR(buffer.st_mode)) ||
-	// 	(method == POST && !S_ISDIR(buffer.st_mode))) {
-	// 	throw StatusCode(400, BAD_REQUEST);
-	// }
+	isUrlDir = S_ISDIR(buffer.st_mode);
+	if (method == POST && !isUrlDir) {
+		throw StatusCode(400, BAD_REQUEST);
+	}
+	if (method == DELETE && isUrlDir) {
+		throw StatusCode(405, FORBIDDEN);
+	}
 }
