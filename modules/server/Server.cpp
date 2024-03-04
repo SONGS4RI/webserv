@@ -12,11 +12,10 @@ Server::Server(const int& _serverSocket, const Config& _config) : serverConfig(_
 Server::~Server() {
 	close(serverSocket);
 }
-int	Server::addClient(int clientSocket) {
+void	Server::addClient(int clientSocket) {
 	Client	client(clientSocket, *this);
-		
+	
 	clients.insert(make_pair(clientSocket, client));
-	return (clientSocket);
 }
 const Config& Server::getServerConfig() const { return (serverConfig);}
 

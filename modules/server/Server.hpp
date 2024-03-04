@@ -24,7 +24,7 @@ class Server {
 		void init(const int& _serverSocket);// config를 바탕으로 서버 소켓관련 함수들 socket(), bind(), listen(), fcntl()
 
 		map<int, Client>&	getClients();
-		int	addClient(int clientSocket);
+		void	addClient(int clientSocket);
 		const Config& getServerConfig() const;
 		const int& getSocketFd() const;
 };

@@ -1,5 +1,6 @@
 #include "EventManager.hpp"
 #include "SocketManager.hpp"
+#include "../response/Response.hpp"
 #include "../request_handler/RequestHandler.hpp"
 #include "../utils/StatusCode.hpp"
 static EventManager* ev = NULL;
@@ -8,15 +9,30 @@ EventManager::EventManager() {
 	init();
 }
 
+EventManager::~EventManager() {
+	close(kq);
+}
+
+void EventManager::init() {
+	kq = kqueue();
+	if (kq == -1) {
+		exitWithErrmsg("Error: kqueue()");
+	}
+}
+
 EventManager* EventManager::getInstance() {
 	if (!ev) {
-		ev = new EventManager();
+		try {
+			ev = new EventManager();
+		} catch (execption& e) {
+			exitWithErrmsg(e.what());
+		}
 	}
 	return (ev);
 }
 
 int EventManager::detectEvent() {
-	kevent(kq, &change_list[0], change_list.size(), event_list, EVENT_MAX_CNT, NULL);
+	return (kevent(kq, &change_list[0], change_list.size(), event_list, EVENT_MAX_CNT, NULL));
 }
 
 void EventManager::addEvent(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags,
@@ -46,9 +62,18 @@ void EventManager::handleEvent(const int& eventIdx) {
 		Client* client = sm->getClient(curEvent->ident);
 		if (sm->isServerSocket(curEvent->ident)) {
 			// 새로운 클라이언트 등록 및 read 이벤트 생성
-			// sm->clients.push_back(Client());
-			int clientSocket = sm->acceptClient(curEvent->ident);
-			addEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+			try {
+				int clientSocket = sm->acceptClient(curEvent->ident);
+				if (clientSocket == -1) { //accept()를 실패해서 클라이언트 소켓 할당도 안된 경우
+					return ;
+				}
+				sm->addClient(curEvent->ident, clientSocket);//throw errCode 발생 가능
+				addEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+			} catch (StatusCode& errCode) {
+				//accept는 성공했는데 다른 문제가 발생한 경우 -> 즉시 에러 리스폰스 만든다.
+				Response*		new errResponse(errBody);
+				addEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, errResponse);
+			}
 		} else if (curEvent->udata == NULL) {
 			// 클라이언트의 처리 상태에 따라 이벤트 처리
 			Request* request = client->getReqeust();// NULL 이면 할당해서 주기
@@ -67,8 +92,12 @@ void EventManager::handleEvent(const int& eventIdx) {
 			}
 		}
 	} else if (curEvent->flags ==  EVFILT_WRITE) {// 쓰기
-		/*
-		뭔가 처리한 결과 데이터 보내기
-		*/
+		if (curEvent->udata != NULL) {//쓸게 있으면 buffsize만큼 쓰기
+			Response* response = (Response *)curEvent->udata;
+			response->writeToSocket(curEvent->ident);
+			if (response->isDone()) {
+				sm->disconnectClient(curEvent->ident);
+			}
+		}
 	}
 }

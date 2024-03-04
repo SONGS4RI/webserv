@@ -1,4 +1,4 @@
-
+#include <sstream>
 #include "Response.hpp"
 #include "../parseConfig/Config.hpp"
 
@@ -10,6 +10,15 @@ Response::Response(ResponseBody* _body) :
 	}
 }
 
+Response::Response(StatusCode errCode) {
+	StatusCode	redirCode(303, SEE_OTHERS);
+	setStatusLine(redirCode);
+
+	ostringstream oss;
+    oss << errCode.getStatusCode();
+	
+	header += "Location:root/html/" + oss.str() + ".html\r\n\r\n";
+}
 
 void	Response::writeToSocket(int fd) {
 	size_t	writeAmount;
