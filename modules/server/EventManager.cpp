@@ -1,9 +1,10 @@
+#include <sys/event.h>
 #include "EventManager.hpp"
 #include "SocketManager.hpp"
 #include "../response/Response.hpp"
 #include "../request_handler/RequestHandler.hpp"
 #include "../utils/StatusCode.hpp"
-static EventManager* ev = NULL;
+EventManager* EventManager::ev = NULL;
 
 EventManager::EventManager() {
 	init();
@@ -24,7 +25,7 @@ EventManager* EventManager::getInstance() {
 	if (!ev) {
 		try {
 			ev = new EventManager();
-		} catch (execption& e) {
+		} catch (exception& e) {
 			exitWithErrmsg(e.what());
 		}
 	}
@@ -51,19 +52,20 @@ void EventManager::handleEvent(const int& eventIdx) {
 	struct kevent* curEvent = &event_list[eventIdx];
 	SocketManager* sm = SocketManager::getInstance();
 
-	if (curEvent->flags & EV_ERROR) {// 에러
+	if (curEvent->filter & EV_ERROR) {// 에러
 		if (sm->isServerSocket(curEvent->ident)) {
 			// 서버 에러 발생하면 안되지만 일단 체크
 			exit(1);
 		}
 		cerr << "client socket error" << endl;
 		sm->disconnectClient(curEvent->ident);
-	} else if (curEvent->flags ==  EVFILT_READ) {// 읽기
+	} else if (curEvent->filter ==  EVFILT_READ) {// 읽기
 		Client* client = sm->getClient(curEvent->ident);
 		if (sm->isServerSocket(curEvent->ident)) {
 			// 새로운 클라이언트 등록 및 read 이벤트 생성
+			int clientSocket;
 			try {
-				int clientSocket = sm->acceptClient(curEvent->ident);
+				clientSocket = sm->acceptClient(curEvent->ident);
 				if (clientSocket == -1) { //accept()를 실패해서 클라이언트 소켓 할당도 안된 경우
 					return ;
 				}
@@ -71,7 +73,7 @@ void EventManager::handleEvent(const int& eventIdx) {
 				addEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 			} catch (StatusCode& errCode) {
 				//accept는 성공했는데 다른 문제가 발생한 경우 -> 즉시 에러 리스폰스 만든다.
-				Response*		new errResponse(errBody);
+				Response*	errResponse = new Response(errCode);
 				addEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, errResponse);
 			}
 		} else if (curEvent->udata == NULL) {
@@ -91,7 +93,7 @@ void EventManager::handleEvent(const int& eventIdx) {
 				changeEvent(curEvent, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, response);
 			}
 		}
-	} else if (curEvent->flags ==  EVFILT_WRITE) {// 쓰기
+	} else if (curEvent->filter ==  EVFILT_WRITE) {// 쓰기
 		if (curEvent->udata != NULL) {//쓸게 있으면 buffsize만큼 쓰기
 			Response* response = (Response *)curEvent->udata;
 			response->writeToSocket(curEvent->ident);
