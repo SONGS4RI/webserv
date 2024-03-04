@@ -24,7 +24,7 @@ class Response {
 		Response(ResponseBody* _body);
 		void	writeToSocket(int fd);
 		EResponseStatus getStatus() {return (status);};
-		~Response();		
+		~Response();
 };
 
 #endif

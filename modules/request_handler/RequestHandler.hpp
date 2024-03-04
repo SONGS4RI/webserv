@@ -4,27 +4,35 @@
 
 #include <map>
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <dirent.h>
 
 #include "HTTPInfo.hpp"
 #include "Request.hpp"
 #include "RequestBody.hpp"
 #include "ResponseBody.hpp"
+#include "../server/Client.hpp"
 using namespace std;
 
 class RequestHandler {
 	private:
 		string method;
 		string requestUrl;
-		RequestBody* requestbody;
+		RequestBody* requestBody;
 		ResponseBody* responseBody;
+		Client* client;
+		bool isUrlDir;
 		char buf[1024];// 동적인 것으로 변경
-		void checkResource() const;
+		void checkResource();
 		void handleGet();
 		void handleDelete();
 		void handlePost();
+		void handleCgiExecve();
+		void handleCgiRead();
 		void handleError(const StatusCode& statusCode);
+		void dirListing(const string& source, string& url);
 	public:
-		RequestHandler(const Request* request);
+		RequestHandler(const Request* request, Client* client);
 		~RequestHandler();
 
 		ResponseBody* handleRequest();

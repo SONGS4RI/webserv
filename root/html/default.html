@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>HTTP Request Sender</title>
+<script>
+function sendRequest() {
+    var xhr = new XMLHttpRequest();
+    var url = document.getElementById("url-input").value;
+    var method = document.getElementById('method-select').value;
+    var responseContainer = document.getElementById("response-container");
+    xhr.open(method, url, true);
+
+    xhr.responseType = 'blob';
+
+    xhr.onload = function () {
+        if (xhr.status === 200) {
+            var contentType = xhr.getResponseHeader('Content-Type');
+
+            if (contentType.includes('text/html')) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    responseContainer.innerHTML = e.target.result;
+                }
+                reader.readAsText(xhr.response);
+            } else if (contentType.includes('text/plain')) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    responseContainer.innerText = e.target.result;
+                }
+                reader.readAsText(xhr.response);
+            } else if (contentType.includes('image/png')) {
+                var img = new Image();
+                var url = URL.createObjectURL(xhr.response);
+                img.onload = function() {
+                    responseContainer.innerHTML = '';
+					responseContainer.style.display = 'flex';
+                    responseContainer.appendChild(img);
+                    URL.revokeObjectURL(url);
+                }
+                img.src = url;
+            } else {
+                responseContainer.innerText = '지원하지 않는 파일 형식입니다.';
+            }
+        } else {
+            responseContainer.innerText = '요청에 실패했습니다: ' + xhr.statusText;
+        }
+    };
+
+    xhr.onerror = function () {
+        responseContainer.innerText = '요청 중 에러가 발생했습니다.';
+    };
+
+    xhr.send();
+}
+</script>
+</head>
+<style>
+	#url-input {
+	  width: 75%;
+	}
+	#response-container {
+		white-space: pre;
+		border: 1px solid #000;
+		min-height: 100px;
+		overflow: auto;
+		margin-top: 10px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: 500px;
+	}
+	#response-container img {
+		max-width: 100%;
+		max-height: 100%;
+	}
+</style>
+
+<body>
+
+<div>
+    <select id="method-select">
+        <option value="GET">GET</option>
+        <option value="POST">POST</option>
+        <option value="DELETE">DELETE</option>
+        <option value="PUT">PUT</option>
+    </select>
+    <input type="text" id="url-input" placeholder="https://example.com">
+    <button onclick="sendRequest()">Send Request</button>
+</div>
+
+<div id="response-container"></div>
+
+</body>
+</html>

@@ -1,6 +1,6 @@
 #include "EventManager.hpp"
 #include "SocketManager.hpp"
-#include "../RequestHandler.hpp"
+#include "../request_handler/RequestHandler.hpp"
 #include "../utils/StatusCode.hpp"
 static EventManager* ev = NULL;
 
@@ -43,7 +43,7 @@ void EventManager::handleEvent(const int& eventIdx) {
 		cerr << "client socket error" << endl;
 		sm->disconnectClient(curEvent->ident);
 	} else if (curEvent->flags ==  EVFILT_READ) {// 읽기
-		Client client = sm->getClient(curEvent->ident);
+		Client* client = sm->getClient(curEvent->ident);
 		if (sm->isServerSocket(curEvent->ident)) {
 			// 새로운 클라이언트 등록 및 read 이벤트 생성
 			// sm->clients.push_back(Client());
@@ -51,17 +51,20 @@ void EventManager::handleEvent(const int& eventIdx) {
 			addEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 		} else if (curEvent->udata == NULL) {
 			// 클라이언트의 처리 상태에 따라 이벤트 처리
-			Request* request = client.getCurReqeust();// NULL 이면 할당해서 주기
-			request->parseRequest(client);
+			Request* request = client->getReqeust();// NULL 이면 할당해서 주기
+			request->parseRequest(*client);
 			if (request->getStatus() == PARSE_DONE || request->getStatusCode().getStatusCode() >= 400) {
 				changeEvent(curEvent, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, request);
 			}
 		} else {
 			Request* request = (Request *)curEvent->udata;
-			RequestHandler requestHandler = RequestHandler(request);
+			RequestHandler requestHandler = RequestHandler(request, client);
 			ResponseBody* responseBody = requestHandler.handleRequest();
-			// client->setResponse(responseBody);
-			// changeEvent(curEvent, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, client->getResponse());
+			if (responseBody != NULL) {// cgi 아니라면
+				Response* response = new Response(responseBody);
+				client->setResponse(response);
+				changeEvent(curEvent, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, response);
+			}
 		}
 	} else if (curEvent->flags ==  EVFILT_WRITE) {// 쓰기
 		/*

@@ -70,7 +70,7 @@ int SocketManager::acceptClient(const int& serverIdent) {
 	return (clientSocket);
 }
 
-const Client* SocketManager::getClient(const int& clientIdent) {
+Client* SocketManager::getClient(const int& clientIdent) {
 	for (map<int, Server>::iterator sit = servers.begin(); sit != servers.end(); sit++) {
 		map<int, Client>::iterator cit = sit->second.getClients().find(clientIdent);
 

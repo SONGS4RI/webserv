@@ -27,7 +27,7 @@ class SocketManager {
 		bool isServerSocket(const int& ident);
 		void disconnectClient(const int& clientIdent);
 		int acceptClient(const int& serverIdent);
-		const Client* getClient(const int& clientIdent);
+		Client* getClient(const int& clientIdent);
 };
 
 #endif
