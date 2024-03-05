@@ -49,7 +49,6 @@ class Config {
 		bool	getAutoindexOn();
 		string	getReturnRedir();
 		vector<string>	getAllowMethods();
-		// static vector<Config> parse(char* fileName);// 파일 파싱하면서 서버 블록으로 나눈 벡터
 		void	printAllInfo();
 };
 

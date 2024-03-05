@@ -11,9 +11,15 @@ Server::Server(const int& _serverSocket, const Config& _config) : serverConfig(_
 
 Server::~Server() {
 	close(serverSocket);
+	for (map<int, Client*>::iterator it = clients.begin(); it != clients.end(); it++) {
+		if (it->second != NULL) {
+			delete it->second;
+			it->second = NULL;
+		}
+	}
 }
 void	Server::addClient(int clientSocket) {
-	Client	client(clientSocket, *this);
+	Client*	client = new Client(clientSocket, *this);
 
 	clients.insert(make_pair(clientSocket, client));
 }
@@ -21,7 +27,7 @@ const Config& Server::getServerConfig() const { return (serverConfig);}
 
 const int& Server::getSocketFd() const { return (serverSocket);}
 
-map<int, Client>&	Server::getClients() { return (clients);}
+map<int, Client*>&	Server::getClients() { return (clients);}
 
 void Server::init(const int& _serverSocket) {
 	struct sockaddr_in	serverAddr;
