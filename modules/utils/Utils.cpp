@@ -4,7 +4,7 @@
 using namespace std;
 
 void	Utils::exitWithErrmsg(const string& errmsg) {
-	std::cout << errmsg << std::endl;
+    log(errmsg, RED);
 	exit(1);
 }
 
@@ -17,3 +17,7 @@ string Utils::intToString(const int& number) {
 size_t Utils::hexToDecimal(const string& hex) {
     return strtol(hex.c_str(), NULL, 16);
 };
+
+void Utils::log(const string& msg, const string& color) {
+    cout << color << msg << RESET << endl;
+}
