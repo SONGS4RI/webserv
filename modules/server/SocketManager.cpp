@@ -92,3 +92,13 @@ Client* SocketManager::getClient(const int& clientIdent) {
 }
 
 map<int, Server*>& SocketManager::getServers() { return (servers);}
+
+const Config* SocketManager::getServerConfig(const int& clientIdent) {
+	for (map<int, Server*>::iterator sit = servers.begin(); sit != servers.end(); sit++) {
+		map<int, Client*>::iterator cit = sit->second->getClients().find(clientIdent);
+		if (cit != sit->second->getClients().end()) {
+			return (&sit->second->getServerConfig());
+		}
+	}
+	return (NULL);
+}

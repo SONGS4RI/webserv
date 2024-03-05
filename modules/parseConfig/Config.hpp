@@ -48,7 +48,7 @@ class Config {
 		string	getIndex();
 		bool	getAutoindexOn();
 		string	getReturnRedir();
-		vector<string>	getAllowMethods();
+		const vector<string>&	getAllowMethods() const;
 		void	printAllInfo();
 };
 

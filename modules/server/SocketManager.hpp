@@ -28,6 +28,7 @@ class SocketManager {
 		void disconnectClient(const int& clientIdent);
 		int acceptClient(const int& serverIdent);
 		Client* getClient(const int& clientIdent);
+		const Config* getServerConfig(const int& clientIdent);
 		map<int, Server*>& getServers();
 };
 
