@@ -21,8 +21,8 @@ int main(int argc, char** argv) {
 	} catch(const char* errstr) {
 		Utils::exitWithErrmsg(errstr);
 	}
-
-	for (map<int, Server>::iterator sit = sm->getServers().begin(); sit != sm->getServers().end(); sit++) {
+	cout << sm->getServers().size() << endl;
+	for (map<int, Server*>::iterator sit = sm->getServers().begin(); sit != sm->getServers().end(); sit++) {
 		em->addEvent(sit->first, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	}
 	Utils::log("Server started", GREEN);
@@ -32,6 +32,7 @@ int main(int argc, char** argv) {
 			em->handleEvent(i);
 		}
 	}
+
 	delete sm;
 	delete em;
 }

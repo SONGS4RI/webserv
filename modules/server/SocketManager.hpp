@@ -16,8 +16,7 @@ using namespace std;
 class SocketManager {
 	private:
 		static SocketManager* sm;
-		map<int, Server> servers;
-
+		map<int, Server*> servers;
 	public:
 		SocketManager();
 		~SocketManager();
@@ -29,7 +28,7 @@ class SocketManager {
 		void disconnectClient(const int& clientIdent);
 		int acceptClient(const int& serverIdent);
 		Client* getClient(const int& clientIdent);
-		map<int, Server>& getServers();
+		map<int, Server*>& getServers();
 };
 
 #endif
