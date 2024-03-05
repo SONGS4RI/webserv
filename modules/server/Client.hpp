@@ -30,7 +30,7 @@ class Client {
 		void setPid(const int& _pid);
 
 		const Server&	getServer() const;
-		Request* getReqeust();
+		Request* getRequest(const int& clientSocketFd);
 		Response* getResponse();
 		const int& getSocketFd();
 		const int& getPipeFd();

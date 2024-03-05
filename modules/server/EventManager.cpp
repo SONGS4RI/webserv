@@ -34,7 +34,9 @@ EventManager* EventManager::getInstance() {
 }
 
 int EventManager::detectEvent() {
+	Utils::log(Utils::intToString(change_list.size()) + "....", CYAN);
 	int newEvents = kevent(kq, &change_list[0], change_list.size(), event_list, EVENT_MAX_CNT, NULL);
+	Utils::log(Utils::intToString(change_list.size() + 1) + "....", CYAN);
 	if (newEvents < 0) {
 		Utils::exitWithErrmsg("Detect Event Error");
 	}
@@ -57,7 +59,7 @@ void EventManager::changeEvent(struct kevent* curEvent, int16_t filter, uint16_t
 void EventManager::handleEvent(const int& eventIdx) {
 	struct kevent* curEvent = &event_list[eventIdx];
 	SocketManager* sm = SocketManager::getInstance();
-
+	Client* client = sm->getClient(curEvent->ident);
 	if (curEvent->flags & EV_ERROR) {// 에러
 		if (sm->isServerSocket(curEvent->ident)) {
 			Utils::exitWithErrmsg("Server Socket Error");
@@ -65,7 +67,6 @@ void EventManager::handleEvent(const int& eventIdx) {
 		Utils::log("client socket error", RED);
 		sm->disconnectClient(curEvent->ident);
 	} else if (curEvent->filter ==  EVFILT_READ) {// 읽기
-		Client* client = sm->getClient(curEvent->ident);
 		if (sm->isServerSocket(curEvent->ident)) {
 			// 새로운 클라이언트 등록 및 read 이벤트 생성
 			int clientSocket;
@@ -86,14 +87,17 @@ void EventManager::handleEvent(const int& eventIdx) {
 		} else if (curEvent->udata == NULL) {
 			// 클라이언트의 처리 상태에 따라 이벤트 처리
 			Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Parsing", GREEN);
-			Request* request = client->getReqeust();// NULL 이면 할당해서 주기
+			Request* request = client->getRequest(curEvent->ident);// NULL 이면 할당해서 주기
 			request->parseRequest(*client);
 			if (request->getStatus() == PARSE_DONE || request->getStatusCode().getStatusCode() >= 400) {
-				Utils::log("Client: " + Utils::intToString(curEvent->ident) +
-				(request->getStatus() == PARSE_DONE ? "Parse Done" : "Parse Error"), GREEN);
-				changeEvent(curEvent, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, request);
+				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": " +
+				(request->getStatus() == PARSE_DONE ? "Parse Done" : "Parse Error: " + request->getStatusCode().getMessage()), GREEN);
+				changeEvent(curEvent, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, request);///////////////////////////여기
 			}
-		} else {
+		}
+	} else if (curEvent->filter ==  EVFILT_WRITE) {// 쓰기
+		if (curEvent->udata != NULL) {// udata -> Request
+			Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Handle Request Start", GREEN);
 			Request* request = (Request *)curEvent->udata;
 			RequestHandler requestHandler = RequestHandler(request, client);
 			ResponseBody* responseBody = requestHandler.handleRequest();
@@ -105,8 +109,7 @@ void EventManager::handleEvent(const int& eventIdx) {
 				changeEvent(curEvent, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, response);
 			}
 		}
-	} else if (curEvent->filter ==  EVFILT_WRITE) {// 쓰기
-		if (curEvent->udata != NULL) {//쓸게 있으면 buffsize만큼 쓰기
+		if (curEvent->udata != NULL) {/// udata -> response
 			Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Writing", GREEN);
 			Response* response = (Response *)curEvent->udata;
 			response->writeToSocket(curEvent->ident);

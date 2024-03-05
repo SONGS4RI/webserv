@@ -25,6 +25,7 @@ class Request {
 		RequestBody* body;
 		map<string, string> properties;
 		int clientSocketFd;
+		const Config* serverConfig;
 		ERequestStatus status;
 		StatusCode statusCode;
 		istringstream readbuf;
@@ -33,7 +34,6 @@ class Request {
 		Request(const int& clientSocketFd);
 		~Request();
 
-		void init();
 		void parseRequest(Client& client);
 		void parseStartLine();
 		void parseHeader();
@@ -44,7 +44,6 @@ class Request {
 		bool getLineAndCheckCRLF(const char& deli);
 		bool checkCRLF();
 		void checkHeaderLineBlock(const string& key, istringstream& iss);
-		void readRestHttpMessage();
 
 		const ERequestStatus& getStatus() const;
 		const map<string, string>& getProperties() const;

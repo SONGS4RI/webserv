@@ -119,7 +119,7 @@ bool	Config::getAutoindexOn() { return (autoindexOn);}
 
 string	Config::getReturnRedir() { return (returnRedir);}
 
-vector<string>	Config::getAllowMethods() { return (allowMethods);}
+const vector<string>&	Config::getAllowMethods() const { return (allowMethods);}
 
 //Config 내용 프린트 해보는 함수
 void	Config::printAllInfo() {

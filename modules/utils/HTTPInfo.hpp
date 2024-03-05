@@ -5,6 +5,8 @@
 #include <map>
 #include <iostream>
 
+#include "../parseConfig/ParseConfig.hpp"
+
 using namespace std;
 
 #define METHOD "method"
@@ -29,7 +31,7 @@ class HTTPInfo {
 	private :
 
 	public :
-		static void isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion);
+		static void isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion, const Config* serverConfig);
 		static void isValidHeaderField(map<string, string>& properties);
 };
 

@@ -6,19 +6,11 @@
 #include "../utils/HTTPInfo.hpp"
 #include "../utils/Utils.hpp"
 #include "../utils/StatusCode.hpp"
+#include "../server/SocketManager.hpp"
 
 using namespace std;
 
 Request::Request(const int& clientSocketFd) {
-	init();
-	this->clientSocketFd = clientSocketFd;// 필요없을 수 도 있음
-}
-
-Request::~Request() {
-	delete body;
-}
-
-void Request::init() {
 	memset(buf, 0, TMP_SIZE);
 	this->readenContentLength = 0;
 	this->leftOverBuffer = "";
@@ -27,6 +19,12 @@ void Request::init() {
 	this->status = START_LINE;
 	this->statusCode = StatusCode();
 	this->readbuf.clear();
+	this->clientSocketFd = clientSocketFd;// 필요없을 수 도 있음
+	this->serverConfig = SocketManager::getInstance()->getServerConfig(clientSocketFd);
+}
+
+Request::~Request() {
+	delete body;
 }
 
 bool Request::getLineAndCheckCRLF(const char& deli) {//////////////////////////////////
@@ -49,13 +47,6 @@ bool Request::checkCRLF() {
 	return false;
 }
 
-void Request::readRestHttpMessage() {
-	// int n;
-	// while (n = read(clientSocketFd, buf, BUF_SIZE) > 0) {
-
-	// }
-}
-
 void Request::parseStartLine() {
 	if (!getLineAndCheckCRLF('\n')) {
 		return ;
@@ -65,13 +56,13 @@ void Request::parseStartLine() {
 	startLine >> method >> requestUrl >> httpVersion;
 	if (!startLine.eof() || startLine.fail() || buf[method.size()] != ' ' ||
 		buf[method.size() + 1 + requestUrl.size()] != ' ') {// 제대로 된 형식 이 아니라면
-		throw StatusCode(400, BAD_REQUEST);
+		throw StatusCode(400, "잘못된 형식");
 	}
-	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion);
+	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion, serverConfig);
 	properties[METHOD] = method;
 	properties[REQUEST_URL] = requestUrl;
 	status = HEADER;
-	cout << "StartLine DONE\n";
+	Utils::log("StartLine Parse DONE", GREEN);
 }
 
 void Request::checkHeaderLineBlock(const string& tmpKey, istringstream& block) {
@@ -80,11 +71,11 @@ void Request::checkHeaderLineBlock(const string& tmpKey, istringstream& block) {
 	keyblock >> key >> rest;
 	// 이미 들어온 키이거나 잘못된 형식
 	if (properties[key].size() || rest.size()) {
-		throw StatusCode(400, BAD_REQUEST);
+		throw StatusCode(400, "이미 들어온 키이거나 잘못된 형식");
 	}
 	block >> value >> rest;
 	if (value == "" || rest.size()) {
-		throw StatusCode(400, BAD_REQUEST);
+		throw StatusCode(400, "잘못된 형식");
 	}
 	block.clear();
 	block.str(key);
@@ -100,7 +91,7 @@ void Request::parseHeader() {
 		status = BODY;
 		size_t contentLength = properties[CONTENT_LENGTH] != "" ? atoi(properties[CONTENT_LENGTH].c_str()) : 0;
 		body->init(properties[CONTENT_TYPE], contentLength);
-		cout << "Header DONE\n";
+		Utils::log("Header Parse DONE", GREEN);
 		return ;
 	}
 	// 한줄씩 읽은거 properties 에 저장
@@ -130,18 +121,15 @@ void Request::parseHeader() {
 void Request::parseDefaultBody() {
 	size_t contentLength = body->getContentLength();
 	size_t targetLength = contentLength - readenContentLength;
-	cout << "contentLength:" << contentLength << "\n";
-	cout << "targetLength:" << targetLength << "\n";
 	readbuf.read(buf, TMP_SIZE);
 	body->addBody(buf, readbuf.gcount());
 	readenContentLength += readbuf.gcount();
-	cout << "readenContentLength:" << readenContentLength << "\n";
 	if (readenContentLength == contentLength && readbuf.eof()) {
 		status = PARSE_DONE;
-		cout << "Body DONE\n";
+		Utils::log("Body Parse DONE", GREEN);
 	}
 	if (targetLength < 0) {
-		throw StatusCode(400, BAD_REQUEST);
+		throw StatusCode(400, "content-length 불일치");
 	}
 }
 
@@ -155,7 +143,7 @@ void Request::parseChunkedBody() {
 			body->setContentLength(Utils::hexToDecimal(buf));// int contentLength = hex -> 십진수
 			if (!body->getContentLength()) {
 				status = PARSE_DONE;
-				cout << "Body DONE\n";
+				Utils::log("Body Parse DONE", GREEN);
 				return ;
 			}
 		} else if (body->getChunkedStatus() == DATA) {
@@ -163,7 +151,7 @@ void Request::parseChunkedBody() {
 				return ;
 			}
 			if (readbuf.gcount() - 2 != (long)body->getContentLength()) {
-				throw StatusCode(400, BAD_REQUEST);
+				throw StatusCode(400, "content-lenght 불일치");
 			}
 			body->setChunkedStatus(CRLF);
 			body->addBody(buf, readbuf.gcount() - 2);
@@ -173,7 +161,7 @@ void Request::parseChunkedBody() {
 				return ;
 			}
 			if (readbuf.gcount() != 2) {
-				throw StatusCode(400, BAD_REQUEST);
+				throw StatusCode(400, "마지막  crlf");
 			}
 			body->setChunkedStatus(LENGTH);
 		}
@@ -184,7 +172,7 @@ void Request::parseBody() {
 	string method = properties[METHOD];
 	if (method == GET || method == DELETE) {
 		status = PARSE_DONE;
-		cout << "Body DONE\n";
+		Utils::log("Body Parse DONE", GREEN);
 		return ;
 	}
 	if (properties[CONTENT_LENGTH] != "") {
@@ -219,13 +207,14 @@ void Request::parseRequest(Client& client) {
 				parseStartLine();
 			} else if (status == PARSE_DONE) {
 				if (properties[TRANSFER_ENCODING] != CHUNKED && readenContentLength != body->getContentLength()) {// contentLength 있는 경우 없는경우 체크
-					throw StatusCode(400, BAD_REQUEST);
+					throw StatusCode(400, "content-length 불일치");
 				}
 				// Response 만들기전 요청 처리
 				break ;
 			}
 		}
 	} catch(const StatusCode& sc) {
+		Utils::log(sc.getMessage(), RED);
 		statusCode = sc;
 	}
 }
