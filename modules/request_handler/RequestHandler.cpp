@@ -117,11 +117,12 @@ void RequestHandler::handlePost() {
 	srand(static_cast<unsigned int>(now));
 	tm* now_tm = localtime(&now);
     int randomValue = rand() % 100000 + 1;
+	// 여기 수정해야함!!!!!!!!!!!!!!!!!!!!!
 	char time[26];
 	sprintf(time, "%04d%02d%02d_%02d%02d%02d",
                  1900 + now_tm->tm_year, now_tm->tm_mon + 1, now_tm->tm_mday,
                  now_tm->tm_hour, now_tm->tm_min, now_tm->tm_sec);
-	string fileName = string(time) + "_" + to_string(randomValue) + extension;
+	string fileName = string(time) + "_" + Utils::intToString(randomValue) + extension;
 
     ofstream outFile(fileName.c_str(), std::ios::out | std::ios::binary);
 	if (!outFile) {
@@ -130,7 +131,7 @@ void RequestHandler::handlePost() {
 	outFile.write(requestBody->getBody().c_str(), requestBody->getBody().size());
 	outFile.close();
 	responseBody->setStatusCode(StatusCode(200, OK));
-	// location 도 responseBody에 추가해주어야 할듯
+	responseBody->setLocation(requestUrl + fileName);// 경로 설정
 }
 
 void RequestHandler::handleCgiExecve() {
@@ -145,28 +146,20 @@ void RequestHandler::handleCgiExecve() {
         close(pipefd[0]);
         dup2(pipefd[1], STDOUT_FILENO);
 
-        char *argv[] = {"/usr/bin/python", "script.py", NULL};
-        char *envp[] = {NULL};
+        char **argv = NULL;// = {"/usr/bin/python", "script.py", NULL};
+        char **envp = NULL;// = {NULL};
         execve(argv[0], argv, envp);
 		exit(EXIT_FAILURE);
     } else { // 부모 프로세스
         close(pipefd[1]);
 		client->setPipeFd(pipefd[0]);
 		client->setPid(pid);
-		// 현재 이벤트 종료
-		// int n = read(pipefd[0], buf, sizeof(buf));
-        // 파이프의 읽기 끝 닫기
-        // close(pipefd[0]);
     }
-	// string result(buf);
-	// if (result == "ERROR") {
-	// 	throw StatusCode(500, INTERVER_SERVER_ERROR);
-	// }
-	// location = result;
 }
 
 void RequestHandler::handleCgiRead() {
-	int n = read(client->getPipeFd(), buf, sizeof(buf));
+	read(client->getPipeFd(), buf, sizeof(buf));
+	close(client->getPipeFd());
 	string location(buf);
 	if (location == "ERROR") {
 		throw StatusCode(500, INTERVER_SERVER_ERROR);
@@ -179,7 +172,7 @@ void RequestHandler::handleCgiRead() {
 void RequestHandler::handleError(const StatusCode& statusCode) {
 	responseBody->setStatusCode(statusCode);
 	responseBody->setContentType(TEXT_HTML);
-	string fileName = to_string(statusCode.getStatusCode()) + ".html";
+	string fileName = Utils::intToString(statusCode.getStatusCode()) + ".html";
 	int fd = open(fileName.c_str(), O_RDONLY);
 	int n = read(fd, buf, sizeof(buf));
 	responseBody->setContentLength(n);

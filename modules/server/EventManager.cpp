@@ -17,7 +17,7 @@ EventManager::~EventManager() {
 void EventManager::init() {
 	kq = kqueue();
 	if (kq == -1) {
-		exitWithErrmsg("Error: kqueue()");
+		Utils::exitWithErrmsg("Error: kqueue()");
 	}
 }
 
@@ -26,7 +26,7 @@ EventManager* EventManager::getInstance() {
 		try {
 			ev = new EventManager();
 		} catch (exception& e) {
-			exitWithErrmsg(e.what());
+			Utils::exitWithErrmsg(e.what());
 		}
 	}
 	return (ev);
