@@ -11,6 +11,12 @@ Server::Server(const int& _serverSocket, const Config& _config) : serverConfig(_
 
 Server::~Server() {
 	close(serverSocket);
+	for (map<int, Client*>::iterator it = clients.begin(); it != clients.end(); it++) {
+		if (it->second != NULL) {
+			delete it->second;
+			it->second = NULL;
+		}
+	}
 }
 void	Server::addClient(int clientSocket) {
 	Client*	client = new Client(clientSocket, *this);

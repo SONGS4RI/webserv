@@ -21,7 +21,6 @@ int main(int argc, char** argv) {
 	} catch(const char* errstr) {
 		Utils::exitWithErrmsg(errstr);
 	}
-	cout << sm->getServers().size() << endl;
 	for (map<int, Server*>::iterator sit = sm->getServers().begin(); sit != sm->getServers().end(); sit++) {
 		em->addEvent(sit->first, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	}
@@ -29,6 +28,7 @@ int main(int argc, char** argv) {
 	while (1) {
 		int	newEvents = em->detectEvent();
 		for (int i = 0; i < newEvents; ++i) {
+			
 			em->handleEvent(i);
 		}
 	}

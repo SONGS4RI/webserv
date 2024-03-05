@@ -37,7 +37,14 @@ void	SocketManager::addClient(int serverSocket, int clientSocket) {
 	}
 }
 
-SocketManager::~SocketManager() {}
+SocketManager::~SocketManager() {
+	for (map<int, Server*>::iterator it = servers.begin(); it != servers.end(); it++) {
+		if (it->second != NULL) {
+			delete it->second;
+			it->second = NULL;
+		}
+	}
+}
 
 /* ident를 받아 servers에 일치하는 소켓 있는지 확인하는 함수 */
 bool SocketManager::isServerSocket(const int& ident) {
