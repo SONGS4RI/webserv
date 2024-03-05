@@ -35,6 +35,8 @@ void	SocketManager::addClient(int serverSocket, int clientSocket) {
 	if (fcntl(clientSocket, F_SETFL, O_NONBLOCK, FD_CLOEXEC) == -1) {
 		throw StatusCode(500, INTERVER_SERVER_ERROR);
 	}
+	Utils::log("Connect Client: " + Utils::intToString(clientSocket) + " to Server: " +
+				Utils::intToString(serverSocket), YELLOW);
 }
 
 SocketManager::~SocketManager() {
@@ -60,6 +62,8 @@ void SocketManager::disconnectClient(const int& clientIdent) {
 		map<int, Client*>::iterator cit = sit->second->getClients().find(clientIdent);
 		if (cit != sit->second->getClients().end()) {
 			sit->second->getClients().erase(cit);
+			Utils::log("Disconnect Client: " + Utils::intToString(clientIdent), YELLOW);
+			break ;
 		}
 	}
 }

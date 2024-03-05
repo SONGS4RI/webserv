@@ -25,7 +25,12 @@ void Client::setPid(const int& _pid) { pid = _pid;}
 
 const Server&	Client::getServer() const { return(myServer);}
 
-Request* Client::getReqeust() { return (request);}
+Request* Client::getReqeust() {
+	if (request == NULL) {
+		request = new Request();
+	}
+	return (request);
+}
 
 Response* Client::getResponse() { return (response);}
 

@@ -11,7 +11,7 @@ using namespace std;
 
 Request::Request(const int& clientSocketFd) {
 	init();
-	this->clientSocketFd = clientSocketFd;
+	this->clientSocketFd = clientSocketFd;// 필요없을 수 도 있음
 }
 
 Request::~Request() {
@@ -26,6 +26,7 @@ void Request::init() {
 	properties.clear();
 	this->status = START_LINE;
 	this->statusCode = StatusCode();
+	this->readbuf.clear();
 }
 
 bool Request::getLineAndCheckCRLF(const char& deli) {//////////////////////////////////
