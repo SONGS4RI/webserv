@@ -10,7 +10,7 @@ SocketManager* SocketManager::getInstance() {
 		try {
 			sm = new SocketManager();
 		} catch (exception& e) {
-			exitWithErrmsg(e.what());
+			Utils::exitWithErrmsg(e.what());
 		}
 	}
 	return (sm);
@@ -21,7 +21,7 @@ void	SocketManager::init(vector<Config>& configs) {
 	for (size_t i = 0; i < configs.size(); ++i) {
 		serverSocket = socket(PF_INET, SOCK_STREAM, 0);
 		if (serverSocket == -1) {
-			exitWithErrmsg("Error: socket()");
+			Utils::exitWithErrmsg("Error: socket()");
 		}
 		Server	server(serverSocket, configs[i]);
 		

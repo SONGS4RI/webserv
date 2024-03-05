@@ -10,7 +10,7 @@ using namespace std;
 
 int main(int argc, char** argv) {
 	if (argc != 2) {
-		exitWithErrmsg(string("Error: ") + argv[0] + " [ConfigFile]");
+		Utils::exitWithErrmsg(string("Error: ") + argv[0] + " [ConfigFile]");
 	}
 
 	SocketManager* sm = SocketManager::getInstance();
@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
 		ParseConfig	parsedConfigFile(argv[1]);
 		sm->init(parsedConfigFile.getServerConfigs());
 	} catch(const char* errstr) {
-		exitWithErrmsg(errstr);
+		Utils::exitWithErrmsg(errstr);
 	}
 
 	for (map<int, Server>::iterator sit = sm->getServers().begin(); sit != sm->getServers().end(); sit++) {

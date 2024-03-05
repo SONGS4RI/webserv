@@ -12,13 +12,9 @@ class Utils {
 	private:
 	public:
 		~Utils();
-
-		static size_t hexToDecimal(const string& hex) {
-			return strtol(hex.c_str(), NULL, 16);
-		};
+		static void exitWithErrmsg(const string& errmsg);
+		static string intToString(const int& number);
+		static size_t hexToDecimal(const string& hex);
 };
-
-void	exitWithErrmsg(std::string errmsg);
-string intToString(int number);
 
 #endif

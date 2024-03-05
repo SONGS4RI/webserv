@@ -14,7 +14,7 @@ Server::~Server() {
 }
 void	Server::addClient(int clientSocket) {
 	Client	client(clientSocket, *this);
-	
+
 	clients.insert(make_pair(clientSocket, client));
 }
 const Config& Server::getServerConfig() const { return (serverConfig);}
@@ -30,12 +30,12 @@ void Server::init(const int& _serverSocket) {
     serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
     serverAddr.sin_port = htons(serverConfig.getPort());
 	if (bind(_serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
-		exitWithErrmsg("Error: bind()");
+		Utils::exitWithErrmsg("Error: bind()");
 	}
 	if (listen(_serverSocket, 10) == -1) {
-		exitWithErrmsg("Error: listen()");
+		Utils::exitWithErrmsg("Error: listen()");
 	}
 	if (fcntl(_serverSocket, F_SETFL, O_NONBLOCK, FD_CLOEXEC) == -1) {
-		exitWithErrmsg("Error: fcntl()");
+		Utils::exitWithErrmsg("Error: fcntl()");
 	}
 }

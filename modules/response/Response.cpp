@@ -13,7 +13,7 @@ Response::Response(StatusCode errCode) {
 	StatusCode	redirCode(303, SEE_OTHERS);
 	setStatusLine(redirCode);
 	
-	header += "Location:root/html/" + intToString(errCode.getStatusCode()) + ".html\r\n\r\n";
+	header += "Location:root/html/" + Utils::intToString(errCode.getStatusCode()) + ".html\r\n\r\n";
 }
 
 void	Response::writeToSocket(int fd) {
@@ -78,11 +78,11 @@ void	Response::setHeader() {
 	header += "Content-Type: ";
 	header += body->getContentType() + "\r\n";
 	header += "Content-Length: ";
-	header += intToString(body->getContentLength()) + "\r\n\r\n";
+	header += Utils::intToString(body->getContentLength()) + "\r\n\r\n";
 }
 
 void	Response::setStatusLine(const StatusCode& statusCode) {
-	statusLine += intToString(statusCode.getStatusCode());
+	statusLine += Utils::intToString(statusCode.getStatusCode());
 	statusLine += " ";
 	statusLine += statusCode.getMessage();
 	statusLine +=  "\r\n";

@@ -19,7 +19,7 @@ Config::Config(Block& globalBlock, Block& serverBlock) {
 			locations[serverBlock.blocks[i].getLocation()] = Config(*this, serverBlock.blocks[i]);
 		}
 	} catch(const char* errmsg) {
-		exitWithErrmsg(string(errmsg));
+		Utils::exitWithErrmsg(string(errmsg));
 	}
 }
 

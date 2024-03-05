@@ -12,7 +12,7 @@ ParseConfig::ParseConfig(const char* configFileName) : charset("{};"), globalBlo
 	try	{
 		fillBlocks(words.begin(), 0, globalBlock);
 	} catch(const char * e) {
-		exitWithErrmsg(e);
+		Utils::exitWithErrmsg(e);
 	}
 	checkBlocksWrong();
 	setServerConfigs();
@@ -25,7 +25,7 @@ void	ParseConfig::setLawLines(const char* configFileName)
 	ifstream	configFile(configFileName);
 
 	if (configFile.is_open() == false) {
-		exitWithErrmsg(string("Open Error: ") + configFileName);
+		Utils::exitWithErrmsg(string("Open Error: ") + configFileName);
 	}
 	string		line;
 	while (getline(configFile, line)) {
@@ -53,18 +53,18 @@ void	ParseConfig::setWords()
 
 bool	ParseConfig::checkWrongSyntaxInConfig() {
 	if (words.size() == 0) {
-		exitWithErrmsg("Error: empty config file");
+		Utils::exitWithErrmsg("Error: empty config file");
 	} else if (isBraceError() == true) {
-		exitWithErrmsg("Error: Brace {} is wrong");
+		Utils::exitWithErrmsg("Error: Brace {} is wrong");
 	} else if (isFrontOpenBraceError() == true) {
-		exitWithErrmsg("Error: front of { is wrong");
+		Utils::exitWithErrmsg("Error: front of { is wrong");
 	} else if (isFrontCloseBraceError() == true) {
-		exitWithErrmsg("Error: front of } is wrong");
+		Utils::exitWithErrmsg("Error: front of } is wrong");
 	}
 	try {
 		isWordSyntaxError();
 	} catch (const char * errmsg) {
-		exitWithErrmsg(errmsg);
+		Utils::exitWithErrmsg(errmsg);
 	}
 	return (false);
 }
@@ -347,9 +347,9 @@ void	ParseConfig::deleteComment() {
 
 void	ParseConfig::checkBlocksWrong() {
 	if (globalBlock.blocks.size() != 1) {
-		exitWithErrmsg("Error: http block is not 1 in config file");
+		Utils::exitWithErrmsg("Error: http block is not 1 in config file");
 	} else if (globalBlock.blocks[0].blocks.size() < 1) {
-		exitWithErrmsg("Error: no server block in config file");
+		Utils::exitWithErrmsg("Error: no server block in config file");
 	}
 }
 
