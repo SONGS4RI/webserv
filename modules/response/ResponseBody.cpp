@@ -41,3 +41,7 @@ void ResponseBody::setBody(const char* str, const size_t& readCnt) {
 		this->body[i] = str[i];
 	}
 }
+
+void ResponseBody::setLocation(const string& _location) {
+	location = _location;
+}

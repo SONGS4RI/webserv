@@ -17,6 +17,10 @@ void Client::setRequest(Request* _request) { request = _request;}
 
 void Client::setResponse(Response* _response) { response = _response;}
 
+void Client::setPipeFd(const int& _pipeFd) { pipeFd = _pipeFd;}
+
+void Client::setPid(const int& _pid) { pid = _pid;}
+
 const Server&	Client::getServer() const { return(myServer);}
 
 Request* Client::getReqeust() { return (request);}
@@ -24,3 +28,7 @@ Request* Client::getReqeust() { return (request);}
 Response* Client::getResponse() { return (response);}
 
 const int& Client::getSocketFd() { return (clientSocket);}
+
+const int& Client::getPipeFd() { return (pipeFd);}
+
+const int& Client::getPid() { return (pid);}

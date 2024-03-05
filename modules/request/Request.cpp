@@ -228,3 +228,11 @@ void Request::parseRequest(Client& client) {
 		statusCode = sc;
 	}
 }
+
+const ERequestStatus& Request::getStatus() const { return (status);}
+
+const map<string, string>& Request::getProperties() const { return (properties);}
+
+RequestBody* Request::getBody() const { return (body);}
+
+const StatusCode& Request::getStatusCode() const { return (statusCode);}

@@ -1,5 +1,7 @@
 #include "RequestBody.hpp"
 
+RequestBody::RequestBody() {}
+
 void RequestBody::init(const string& contentType, const size_t& contentLength) {
 	this->contentType = contentType;
 	this->contentLength = contentLength;

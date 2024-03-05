@@ -26,8 +26,8 @@ class Client {
 
 		void setRequest(Request* _request);
 		void setResponse(Response* _response);
-		void setPipeFd(const int& pipeFd);
-		void setPid(const int& pid);
+		void setPipeFd(const int& _pipeFd);
+		void setPid(const int& _pid);
 
 		const Server&	getServer() const;
 		Request* getReqeust();

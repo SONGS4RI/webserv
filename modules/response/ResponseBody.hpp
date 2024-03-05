@@ -33,7 +33,7 @@ class ResponseBody {
         void setContentType(const string& contentType);
         void setContentLength(const size_t& contentLength);
         void setBody(const char* str, const size_t& readCnt);
-		void setLocation(const string& location);
+		void setLocation(const string& _location);
 };
 
 # endif
