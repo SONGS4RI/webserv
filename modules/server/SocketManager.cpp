@@ -17,12 +17,14 @@ SocketManager* SocketManager::getInstance() {
 
 /* server의 config를 바탕으로 서버 소켓관련 함수들 socket(), bind(), listen(), fcntl() */
 void	SocketManager::init(vector<Config>& configs) {
-		int	serverSocket;
+	int	serverSocket;
 	for (size_t i = 0; i < configs.size(); ++i) {
 		serverSocket = socket(PF_INET, SOCK_STREAM, 0);
 		if (serverSocket == -1) {
 			Utils::exitWithErrmsg("Error: socket()");
 		}
+		int	reuse = 1;
+		setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 		Server	*server = new Server(serverSocket, configs[i]);
 		
 		servers.insert(make_pair(serverSocket, server));
