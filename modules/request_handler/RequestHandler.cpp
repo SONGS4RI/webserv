@@ -4,9 +4,13 @@
 #include <fcntl.h>
 #include "RequestHandler.hpp"
 #include "../server/EventManager.hpp"
+#include "../utils/HTTPInfo.hpp"
 
 RequestHandler::RequestHandler(const Request* request, Client* client) {
+	this->buf = NULL;
 	if (request->getStatus() != ERROR) {
+		this->bodyMaxSize =  client->getServer().getServerConfig().getClientMaxBodySize();
+		this->buf = new char[bodyMaxSize];
 		this->method = request->getProperties().find(METHOD)->second;
 		this->requestUrl = request->getProperties().find(REQUEST_URL)->second;//서버 루트 url + requestUrl 해주어야함
 		this->requestBody = request->getBody();
@@ -15,7 +19,11 @@ RequestHandler::RequestHandler(const Request* request, Client* client) {
 	this->responseBody = new ResponseBody(request->getStatusCode());
 }
 
-RequestHandler::~RequestHandler() {}
+RequestHandler::~RequestHandler() {
+	if (buf != NULL) {
+		delete buf;
+	}
+}
 
 ResponseBody* RequestHandler::handleRequest() {
 	try {
@@ -46,14 +54,15 @@ ResponseBody* RequestHandler::handleRequest() {
 }
 
 void RequestHandler::handleGet() {
-	if (1/* 디렉토리 리스팅 on */ && isUrlDir) {
+	bool autoIndex = client->getServer().getServerConfig().getAutoindexOn();
+	if (autoIndex && isUrlDir) {
 		string resource = /*root + */requestUrl;
 		dirListing(resource, requestUrl);
-	} else if (1/* 디렉토리 리스팅 off */ && isUrlDir) {
+	} else if (!autoIndex && isUrlDir) {
 		throw StatusCode(400, BAD_REQUEST);
 	} else {
-		int fd = open(requestUrl.c_str(), O_RDONLY);
-		int n = read(fd, buf, sizeof(buf));
+		int fd = open((HTTPInfo::root /* + 소스 디렉토리 */ + requestUrl).c_str(), O_RDONLY);
+		int n = read(fd, buf, bodyMaxSize);
 		if (n < 0) {// max size 보다 클때도 추가
 			handleError(StatusCode(500, INTERVER_SERVER_ERROR));
 			return ;
@@ -156,7 +165,7 @@ void RequestHandler::handleCgiExecve() {
 }
 
 void RequestHandler::handleCgiRead() {
-	read(client->getPipeFd(), buf, sizeof(buf));
+	read(client->getPipeFd(), buf, bodyMaxSize);
 	close(client->getPipeFd());
 	string location(buf);
 	if (location == "ERROR") {
@@ -176,7 +185,7 @@ void RequestHandler::handleError(const StatusCode& statusCode) {
 	if (fd < 0) {
 		Utils::exitWithErrmsg(INTERVER_SERVER_ERROR);
 	}
-	int n = read(fd, buf, sizeof(buf));
+	int n = read(fd, buf, bodyMaxSize);
 	if (n < 0) {
 		Utils::exitWithErrmsg(INTERVER_SERVER_ERROR);
 	}
@@ -186,7 +195,7 @@ void RequestHandler::handleError(const StatusCode& statusCode) {
 
 void RequestHandler::checkResource() {
 	struct stat buffer;
-	if (stat(requestUrl.c_str(), &buffer) != 0) {
+	if (stat((HTTPInfo::root + requestUrl).c_str(), &buffer) != 0) {
 		throw StatusCode(404, NOT_FOUND);
 	}
 	// 디렉토리 리스팅 해야함.....

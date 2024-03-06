@@ -22,7 +22,8 @@ class RequestHandler {
 		ResponseBody* responseBody;
 		Client* client;
 		bool isUrlDir;
-		char buf[1024];// 동적인 것으로 변경
+		char* buf;// 동적인 것으로 변경
+		size_t bodyMaxSize;
 		void checkResource();
 		void handleGet();
 		void handleDelete();

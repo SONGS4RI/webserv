@@ -109,13 +109,13 @@ int	Config::getPort() { return (port);}
 
 string	Config::getServerName() { return (serverName);}
 
-size_t	Config::getClientMaxBodySize() { return (clientMaxBodySize);}
+const size_t& Config::getClientMaxBodySize() const { return (clientMaxBodySize);}
 
 string	Config::getRoot() { return (root);}
 
 string	Config::getIndex() { return (index);}
 
-bool	Config::getAutoindexOn() { return (autoindexOn);}
+const bool&	Config::getAutoindexOn() const { return (autoindexOn);}
 
 string	Config::getReturnRedir() { return (returnRedir);}
 

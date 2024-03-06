@@ -43,10 +43,10 @@ class Config {
 		map<string, Config>	getLocations();
 		int	getPort();
 		string	getServerName();
-		size_t	getClientMaxBodySize();
+		const size_t& getClientMaxBodySize() const;
 		string	getRoot();
 		string	getIndex();
-		bool	getAutoindexOn();
+		const bool&	getAutoindexOn() const;
 		string	getReturnRedir();
 		const vector<string>&	getAllowMethods() const;
 		void	printAllInfo();
