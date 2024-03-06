@@ -1,8 +1,7 @@
 #include "Response.hpp"
 #include "../parseConfig/Config.hpp"
 
-Response::Response(ResponseBody* _body) :
- status(RP_STATUS_LINE), nextIdx(0) , statusLine("HTTP/1.1 "), body(_body){
+Response::Response(ResponseBody* _body) : status(RP_STATUS_LINE), nextIdx(0) , statusLine("HTTP/1.1 "), body(_body) {
 	setStatusLine(_body->getStatusCode());
 	if (_body->getStatusCode().getStatusCode() == 200){
 		setHeader();
@@ -11,6 +10,7 @@ Response::Response(ResponseBody* _body) :
 
 Response::Response(StatusCode errCode) {
 	StatusCode	redirCode(303, SEE_OTHERS);
+	cout << "response construct errCode\n";
 	setStatusLine(redirCode);
 	
 	header += "Location:root/html/" + Utils::intToString(errCode.getStatusCode()) + ".html\r\n\r\n";
@@ -19,7 +19,6 @@ Response::Response(StatusCode errCode) {
 void	Response::writeToSocket(int fd) {
 	size_t	writeAmount;
 	size_t	writtenLength = 0;
-	
 	while (BUF_SIZE > writtenLength && status != RP_DONE) {
 		switch (status) {
 			case RP_STATUS_LINE:
@@ -55,7 +54,7 @@ void	Response::writeToSocket(int fd) {
 			case RP_DONE:
 				break ;
 			default:
-				break;
+				return ;
 		}
 	}
 }
