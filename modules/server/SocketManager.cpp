@@ -63,6 +63,8 @@ void SocketManager::disconnectClient(const int& clientIdent) {
 	for (map<int, Server*>::iterator sit = servers.begin(); sit != servers.end(); sit++) {
 		map<int, Client*>::iterator cit = sit->second->getClients().find(clientIdent);
 		if (cit != sit->second->getClients().end()) {
+			delete cit->second;
+			cit->second = NULL;
 			sit->second->getClients().erase(cit);
 			Utils::log("Disconnect Client: " + Utils::intToString(clientIdent), YELLOW);
 			return ;

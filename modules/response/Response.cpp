@@ -67,7 +67,10 @@ bool	Response::isDone() {
 }
 
 Response::~Response(){
-	delete body;
+	if (body != NULL) {
+		delete body;
+		body = NULL;
+	}
 }
 /* 수정 요망 !!! */
 //확실히 없는경우 204 201 각종 에러일때, POST, DELETE. 리다이렉션 할때 헤더에 로케이션 들어갈 예정.

@@ -15,9 +15,7 @@ RequestHandler::RequestHandler(const Request* request, Client* client) {
 	this->responseBody = new ResponseBody(request->getStatusCode());
 }
 
-RequestHandler::~RequestHandler() {
-	delete this->responseBody;
-}
+RequestHandler::~RequestHandler() {}
 
 ResponseBody* RequestHandler::handleRequest() {
 	try {

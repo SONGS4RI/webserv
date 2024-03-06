@@ -24,7 +24,10 @@ Request::Request(const int& clientSocketFd) {
 }
 
 Request::~Request() {
-	delete body;
+	if (body != NULL) {
+		delete body;
+		body = NULL;
+	}
 }
 
 bool Request::getLineAndCheckCRLF(const char& deli) {//////////////////////////////////

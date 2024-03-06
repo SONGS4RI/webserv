@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
 		Utils::exitWithErrmsg(errstr);
 	}
 	for (map<int, Server*>::iterator sit = sm->getServers().begin(); sit != sm->getServers().end(); sit++) {
-		em->addEvent(sit->first, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+		em->changeEvent(sit->first, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	}
 	Utils::log("Server started", GREEN);
 	while (1) {
