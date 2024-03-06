@@ -92,11 +92,12 @@ void EventManager::handleEvent(const int& eventIdx) {
 			if (request->getStatus() == PARSE_DONE || request->getStatusCode().getStatusCode() >= 400) {
 				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": " +
 				(request->getStatus() == PARSE_DONE ? "Parse Done" : "Parse Error: " + request->getStatusCode().getMessage()), GREEN);
-				changeEvent(curEvent, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, request);///////////////////////////여기
+				changeEvent(curEvent, EVFILT_READ, EV_DELETE, 0, 0, request);
+				addEvent(curEvent->ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, request);
 			}
 		}
 	} else if (curEvent->filter ==  EVFILT_WRITE) {// 쓰기
-		if (curEvent->udata != NULL) {// udata -> Request
+		if (client->getResponse() == NULL) {// udata -> Request
 			Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Handle Request Start", GREEN);
 			Request* request = (Request *)curEvent->udata;
 			RequestHandler requestHandler = RequestHandler(request, client);
@@ -108,15 +109,15 @@ void EventManager::handleEvent(const int& eventIdx) {
 				client->setResponse(response);
 				changeEvent(curEvent, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, response);
 			}
-		}
-		if (curEvent->udata != NULL) {/// udata -> response
+		} else {//client->getResponse() != NULL
 			Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Writing", GREEN);
 			Response* response = (Response *)curEvent->udata;
 			response->writeToSocket(curEvent->ident);
+			Utils::log("asd", CYAN);
 			if (response->isDone()) {
 				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Write Done", GREEN);
 				sm->disconnectClient(curEvent->ident);
-				changeEvent(curEvent, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+				changeEvent(curEvent, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
 			}
 		}
 	}
