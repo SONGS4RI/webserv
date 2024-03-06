@@ -170,9 +170,16 @@ void RequestHandler::handleCgiRead() {
 void RequestHandler::handleError(const StatusCode& statusCode) {
 	responseBody->setStatusCode(statusCode);
 	responseBody->setContentType(TEXT_HTML);
-	string fileName = Utils::intToString(statusCode.getStatusCode()) + ".html";
+
+	string fileName = HTTPInfo::root + "html/" + Utils::intToString(statusCode.getStatusCode()) + ".html";
 	int fd = open(fileName.c_str(), O_RDONLY);
+	if (fd < 0) {
+		Utils::exitWithErrmsg(INTERVER_SERVER_ERROR);
+	}
 	int n = read(fd, buf, sizeof(buf));
+	if (n < 0) {
+		Utils::exitWithErrmsg(INTERVER_SERVER_ERROR);
+	}
 	responseBody->setContentLength(n);
 	responseBody->setBody(buf, n);
 }

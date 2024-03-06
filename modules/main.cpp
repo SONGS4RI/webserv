@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
 	Utils::log("Server started", GREEN);
 	while (1) {
 		int	newEvents = em->detectEvent();
-		Utils::log(Utils::intToString(newEvents) + " Event 발생", GREEN);
+		Utils::log(Utils::intToString(newEvents) + "개 Event 발생", GREEN);
 		for (int i = 0; i < newEvents; ++i) {
 			em->handleEvent(i);
 		}

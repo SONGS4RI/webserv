@@ -51,9 +51,13 @@ void EventManager::changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, 
 
 void EventManager::handleEvent(const int& eventIdx) {
 	struct kevent* curEvent = &event_list[eventIdx];
-	Utils::log(Utils::intToString(curEvent->ident) + " Event 처리중...", GREEN);
+	Utils::log(Utils::intToString(curEvent->ident) + "번 Event 처리중...", GREEN);
 	SocketManager* sm = SocketManager::getInstance();
 	Client* client = sm->getClient(curEvent->ident);
+	if (curEvent->flags & EV_DELETE) {
+		Utils::log(Utils::intToString(curEvent->ident) + "번 Event 삭제됨", GREEN);
+		return ;
+	}
 	if (curEvent->flags & EV_ERROR) {// 에러
 		if (sm->isServerSocket(curEvent->ident)) {
 			Utils::exitWithErrmsg("Server Socket Error");
@@ -100,7 +104,12 @@ void EventManager::handleEvent(const int& eventIdx) {
 			if (responseBody != NULL) {// cgi 아니라면
 				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Response Created: " +
 				responseBody->getStatusCode().getMessage(), GREEN);
-				Response* response = new Response(responseBody);
+				Response* response; 
+				if (responseBody->getStatusCode().getStatusCode() >= 400) {
+					response = new Response(responseBody->getStatusCode());
+				} else {
+					response = new Response(responseBody);
+				}
 				client->setResponse(response);
 			}
 		} else {//client->getResponse() != NULL
@@ -110,7 +119,7 @@ void EventManager::handleEvent(const int& eventIdx) {
 			if (response->isDone()) {
 				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Write Done", GREEN);
 				sm->disconnectClient(curEvent->ident);
-				changeEvent(curEvent->ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+				changeEvent(curEvent->ident, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
 			}
 		}
 	}

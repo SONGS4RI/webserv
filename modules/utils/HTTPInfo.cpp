@@ -1,6 +1,11 @@
 #include "HTTPInfo.hpp"
 #include "StatusCode.hpp"
 #include "Utils.hpp"
+#include "unistd.h"
+
+char currentPath[FILENAME_MAX];
+
+string HTTPInfo::root = string(getcwd(currentPath, sizeof(currentPath))) + "/../root/";
 
 void HTTPInfo::isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion, const Config* serverConfig) {
 	vector<string> methods = serverConfig->getAllowMethods();

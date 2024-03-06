@@ -29,10 +29,11 @@ using namespace std;
 
 class HTTPInfo {
 	private :
-
+		
 	public :
 		static void isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion, const Config* serverConfig);
 		static void isValidHeaderField(map<string, string>& properties);
+		static string root;
 };
 
 #endif
