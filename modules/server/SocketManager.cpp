@@ -65,7 +65,7 @@ void SocketManager::disconnectClient(const int& clientIdent) {
 		if (cit != sit->second->getClients().end()) {
 			sit->second->getClients().erase(cit);
 			Utils::log("Disconnect Client: " + Utils::intToString(clientIdent), YELLOW);
-			break ;
+			return ;
 		}
 	}
 }

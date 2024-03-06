@@ -34,9 +34,7 @@ EventManager* EventManager::getInstance() {
 }
 
 int EventManager::detectEvent() {
-	Utils::log(Utils::intToString(change_list.size()) + "....", CYAN);
 	int newEvents = kevent(kq, &change_list[0], change_list.size(), event_list, EVENT_MAX_CNT, NULL);
-	Utils::log(Utils::intToString(change_list.size() + 1) + "....", CYAN);
 	if (newEvents < 0) {
 		Utils::exitWithErrmsg("Detect Event Error");
 	}
@@ -54,10 +52,12 @@ void EventManager::addEvent(uintptr_t ident, int16_t filter, uint16_t flags, uin
 void EventManager::changeEvent(struct kevent* curEvent, int16_t filter, uint16_t flags,
 								uint32_t fflags, intptr_t data, void* udata) {
 	EV_SET(curEvent, curEvent->ident, filter, flags, fflags, data, udata);
+	change_list.push_back(*curEvent);
 }
 
 void EventManager::handleEvent(const int& eventIdx) {
 	struct kevent* curEvent = &event_list[eventIdx];
+	Utils::log(Utils::intToString(curEvent->ident) + " Event 처리중...", GREEN);
 	SocketManager* sm = SocketManager::getInstance();
 	Client* client = sm->getClient(curEvent->ident);
 	if (curEvent->flags & EV_ERROR) {// 에러
@@ -92,11 +92,13 @@ void EventManager::handleEvent(const int& eventIdx) {
 			if (request->getStatus() == PARSE_DONE || request->getStatusCode().getStatusCode() >= 400) {
 				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": " +
 				(request->getStatus() == PARSE_DONE ? "Parse Done" : "Parse Error: " + request->getStatusCode().getMessage()), GREEN);
-				changeEvent(curEvent, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, request);///////////////////////////여기
+				// changeEvent(curEvent, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+				// addEvent(curEvent->ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, request);
+				changeEvent(curEvent, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, request);
 			}
 		}
 	} else if (curEvent->filter ==  EVFILT_WRITE) {// 쓰기
-		if (curEvent->udata != NULL) {// udata -> Request
+		if (client->getResponse() == NULL) {// udata -> Request
 			Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Handle Request Start", GREEN);
 			Request* request = (Request *)curEvent->udata;
 			RequestHandler requestHandler = RequestHandler(request, client);
@@ -106,17 +108,15 @@ void EventManager::handleEvent(const int& eventIdx) {
 				responseBody->getStatusCode().getMessage(), GREEN);
 				Response* response = new Response(responseBody);
 				client->setResponse(response);
-				changeEvent(curEvent, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, response);
 			}
-		}
-		if (curEvent->udata != NULL) {/// udata -> response
+		} else {//client->getResponse() != NULL
 			Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Writing", GREEN);
-			Response* response = (Response *)curEvent->udata;
+			Response* response = client->getResponse();
 			response->writeToSocket(curEvent->ident);
 			if (response->isDone()) {
 				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Write Done", GREEN);
 				sm->disconnectClient(curEvent->ident);
-				changeEvent(curEvent, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+				changeEvent(curEvent, EVFILT_READ, EV_DISABLE, 0, 0, NULL);
 			}
 		}
 	}
