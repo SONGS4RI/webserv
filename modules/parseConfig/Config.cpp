@@ -61,6 +61,14 @@ void	Config::setByBlock(Block& block) {
 			autoindexOn = false;
 		}
 	}
+	if ((it = block.directives.find("allow_methods")) != block.directives.end()) {
+			for (size_t i = 0; i < it->second.size(); i++) {
+				if (isWrongAllowMethod(it->second[i]) == true) {
+					throw "Error: allow_methods is wrong in configfile";
+				}
+				allowMethods.push_back(it->second[i]);
+			}
+		}
 	if (block.type == "server") {//서버블록에만 있는 지시어
 		if ((it = block.directives.find("listen")) != block.directives.end()) {
 			if (isWrongPort(it->second[0]) == true) {
@@ -76,14 +84,6 @@ void	Config::setByBlock(Block& block) {
 			serverName = "webserv.com";
 		}
 	} else if (block.type == "location") {//로케이션블록에만 있는 지시어
-		if ((it = block.directives.find("allow_methods")) != block.directives.end()) {
-			for (size_t i = 0; i < it->second.size(); i++) {
-				if (isWrongAllowMethod(it->second[i]) == true) {
-					throw "Error: allow_methods is wrong in configfile";
-				}
-				allowMethods.push_back(it->second[i]);
-			}
-		}
 		if ((it = block.directives.find("return")) != block.directives.end()) {
 			if (isWrongPath(it->second[0]) == true) {
 				throw "Error: return Path is wrong in configfile";
@@ -132,6 +132,11 @@ void	Config::printAllInfo() {
 		cout << "root: " << root << endl;
 		cout << "index: " << index << endl;
 		cout << "autoindex: " << autoindexOn << endl;
+		cout << "allowMethods: ";
+		for (size_t i = 0; i < this->allowMethods.size(); i++) {
+			cout << this->allowMethods[i] << ' ';
+		}
+		cout << endl;
 		for (map<string, Config>::iterator it = locations.begin(); it != locations.end(); it++) {
 			it->second.printAllInfo();
 		}
@@ -139,11 +144,6 @@ void	Config::printAllInfo() {
 		cout << "\t======== LOCATION =========" << endl;
 		cout << "\ttype: LOCATION_CONFIG" << endl;
 		cout << "\treturn: " << this->returnRedir << endl;
-		cout << "\tallowMethods: ";
-		for (size_t i = 0; i < this->allowMethods.size(); i++) {
-			cout << this->allowMethods[i] << ' ';
-		}
-		cout << endl;
 		cout << "\talias: " << this->alias << endl;
 	}
 }

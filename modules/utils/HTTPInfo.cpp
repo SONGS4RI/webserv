@@ -5,10 +5,10 @@
 void HTTPInfo::isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion, const Config* serverConfig) {
 	vector<string> methods = serverConfig->getAllowMethods();
 	if (find(methods.begin(), methods.end(), method) == methods.end()) {
-		throw StatusCode(400, BAD_REQUEST);
+		throw StatusCode(400, string(BAD_REQUEST) + ": Not Allowed Method");
 	}
 	if (httpVersion != HTTP_VERSION || requestUrl == "") {
-		throw StatusCode(400, BAD_REQUEST);
+		throw StatusCode(400, string(BAD_REQUEST) + ": invalid format");
 	}
 }
 
