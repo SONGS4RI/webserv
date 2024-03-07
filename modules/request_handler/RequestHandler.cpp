@@ -63,14 +63,17 @@ void RequestHandler::handleGet() {
 	} else if (!autoIndex && isUrlDir) {
 		throw StatusCode(400, BAD_REQUEST);
 	} else {
-		int fd = open((HTTPInfo::root /* + 소스 디렉토리 */ + requestUrl).c_str(), O_RDONLY);
+		size_t idx = requestUrl.rfind('.');
+		string contentType = idx != SIZE_T_MAX ? string(requestUrl.begin() + idx + 1, requestUrl.end()) : "";
+		
+		int fd = open((HTTPInfo::root + requestUrl).c_str(), O_RDONLY);
 		int n = read(fd, buf, bodyMaxSize);
 		if (n < 0) {// max size 보다 클때도 추가
 			handleError(StatusCode(500, INTERVER_SERVER_ERROR));
 			return ;
 		}
 		responseBody->setStatusCode(StatusCode(200, OK));
-		responseBody->setContentType(requestBody->getContentType());
+		responseBody->setContentType(HTTPInfo::convertToMIME(contentType));
 		responseBody->setContentLength(n);
 		responseBody->setBody(buf, n);
 		close(fd);
@@ -181,7 +184,7 @@ void RequestHandler::handleCgiRead() {
 void RequestHandler::handleError(const StatusCode& statusCode) {
 	responseBody->setStatusCode(statusCode);
 	responseBody->setContentType(TEXT_HTML);
-	string fileName = HTTPInfo::root + "html/" + Utils::intToString(statusCode.getStatusCode()) + ".html";
+	string fileName = HTTPInfo::defaultRoot + "html/" + Utils::intToString(statusCode.getStatusCode()) + ".html";
 	int fd = open(fileName.c_str(), O_RDONLY);
 	if (fd < 0) {
 		Utils::exitWithErrmsg(INTERVER_SERVER_ERROR);
