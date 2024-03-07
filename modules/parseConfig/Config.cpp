@@ -101,7 +101,7 @@ void	Config::setByBlock(Block& block) {
 	}
 }
 
-EConfigType	Config::getType() { return (type);}
+const EConfigType	Config::getType() const { return (type);}
 
 map<string, Config>	Config::getLocations() { return (locations);}
 
@@ -122,7 +122,7 @@ string	Config::getReturnRedir() { return (returnRedir);}
 const vector<string>&	Config::getAllowMethods() const { return (allowMethods);}
 
 //Config 내용 프린트 해보는 함수
-void	Config::printAllInfo() {
+void	Config::printAllInfo() const {
 	if (this->getType() == SERVER_CONFIG) {
 		cout << "======== SERVER =========" << endl;
 		cout << "type: SERVER_CONFIG" << endl;
@@ -137,7 +137,7 @@ void	Config::printAllInfo() {
 			cout << this->allowMethods[i] << ' ';
 		}
 		cout << endl;
-		for (map<string, Config>::iterator it = locations.begin(); it != locations.end(); it++) {
+		for (map<string, Config>::const_iterator it = locations.begin(); it != locations.end(); it++) {
 			it->second.printAllInfo();
 		}
 	} else if (this->getType() == LOCATION_CONFIG) {

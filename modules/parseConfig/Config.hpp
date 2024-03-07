@@ -39,7 +39,7 @@ class Config {
 		void	setByBlock(Block& Block_);
 		
 		/* Getter */
-		EConfigType	getType();
+		const EConfigType	getType() const;
 		map<string, Config>	getLocations();
 		int	getPort();
 		string	getServerName();
@@ -49,7 +49,7 @@ class Config {
 		const bool&	getAutoindexOn() const;
 		string	getReturnRedir();
 		const vector<string>&	getAllowMethods() const;
-		void	printAllInfo();
+		void	printAllInfo() const;
 };
 
 #endif

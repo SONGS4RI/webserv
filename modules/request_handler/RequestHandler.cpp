@@ -7,6 +7,10 @@
 #include "../utils/HTTPInfo.hpp"
 
 RequestHandler::RequestHandler(const Request* request, Client* client) {
+	this->requestBody = NULL;
+	this->client = client;
+	this->responseBody = new ResponseBody(request->getStatusCode());
+	this->bodyMaxSize = 0;
 	this->buf = NULL;
 	if (request->getStatus() != ERROR) {
 		this->bodyMaxSize =  client->getServer().getServerConfig().getClientMaxBodySize();
@@ -14,9 +18,7 @@ RequestHandler::RequestHandler(const Request* request, Client* client) {
 		this->method = request->getProperties().find(METHOD)->second;
 		this->requestUrl = request->getProperties().find(REQUEST_URL)->second;//서버 루트 url + requestUrl 해주어야함
 		this->requestBody = request->getBody();
-		this->client = client;
 	}
-	this->responseBody = new ResponseBody(request->getStatusCode());
 }
 
 RequestHandler::~RequestHandler() {
@@ -179,7 +181,6 @@ void RequestHandler::handleCgiRead() {
 void RequestHandler::handleError(const StatusCode& statusCode) {
 	responseBody->setStatusCode(statusCode);
 	responseBody->setContentType(TEXT_HTML);
-
 	string fileName = HTTPInfo::root + "html/" + Utils::intToString(statusCode.getStatusCode()) + ".html";
 	int fd = open(fileName.c_str(), O_RDONLY);
 	if (fd < 0) {
