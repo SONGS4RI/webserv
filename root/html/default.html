@@ -50,7 +50,7 @@ function sendRequest() {
     xhr.onerror = function () {
         responseContainer.innerText = '요청 중 에러가 발생했습니다.';
     };
-
+	xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
     xhr.send();
 }
 </script>

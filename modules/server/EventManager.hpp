@@ -24,10 +24,8 @@ class EventManager {
 
 		~EventManager();
 		void init();// kqueue()
-		void addEvent(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags,
+		void changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags,
 					intptr_t data, void* udata);
-		void changeEvent(struct kevent* curEvent, int16_t filter, uint16_t flags,
-						uint32_t fflags, intptr_t data, void* udata);
 		int detectEvent();
 		void handleEvent(const int& eventIdx);// write, read
 

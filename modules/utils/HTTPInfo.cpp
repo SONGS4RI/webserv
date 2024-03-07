@@ -1,6 +1,12 @@
 #include "HTTPInfo.hpp"
 #include "StatusCode.hpp"
 #include "Utils.hpp"
+#include "unistd.h"
+
+char currentPath[FILENAME_MAX];
+
+string HTTPInfo::root = string(getcwd(currentPath, sizeof(currentPath))) + "/../root/" /* + config root*/;
+string HTTPInfo::defaultRoot = string(getcwd(currentPath, sizeof(currentPath))) + "/../root/";
 
 void HTTPInfo::isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion, const Config* serverConfig) {
 	vector<string> methods = serverConfig->getAllowMethods();
@@ -40,4 +46,17 @@ void HTTPInfo::isValidHeaderField(map<string, string>& properties) {
 	} else if (properties[METHOD] == POST) {
 		throw StatusCode(400, string(BAD_REQUEST) + ": isValidHeaderField 5");
 	}
+}
+
+string HTTPInfo::convertToMIME(const string& contentType) {
+	if (contentType == "html") {
+		return TEXT_HTML;
+	} else if (contentType == "png") {
+		return IMAGE_PNG;
+	} else if (contentType == "" || contentType == "txt") {
+		return TEXT_PLAIN;
+	} else if (contentType == ".bin") {
+		return APPLICATION_OCTET_STREAM;
+	}
+	return "";
 }

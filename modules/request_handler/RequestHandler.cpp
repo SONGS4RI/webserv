@@ -4,19 +4,27 @@
 #include <fcntl.h>
 #include "RequestHandler.hpp"
 #include "../server/EventManager.hpp"
+#include "../utils/HTTPInfo.hpp"
 
 RequestHandler::RequestHandler(const Request* request, Client* client) {
+	this->requestBody = NULL;
+	this->client = client;
+	this->responseBody = new ResponseBody(request->getStatusCode());
+	this->bodyMaxSize = 0;
+	this->buf = NULL;
 	if (request->getStatus() != ERROR) {
+		this->bodyMaxSize =  client->getServer().getServerConfig().getClientMaxBodySize();
+		this->buf = new char[bodyMaxSize];
 		this->method = request->getProperties().find(METHOD)->second;
 		this->requestUrl = request->getProperties().find(REQUEST_URL)->second;//서버 루트 url + requestUrl 해주어야함
 		this->requestBody = request->getBody();
-		this->client = client;
 	}
-	this->responseBody = new ResponseBody(request->getStatusCode());
 }
 
 RequestHandler::~RequestHandler() {
-	delete this->responseBody;
+	if (buf != NULL) {
+		delete buf;
+	}
 }
 
 ResponseBody* RequestHandler::handleRequest() {
@@ -48,20 +56,24 @@ ResponseBody* RequestHandler::handleRequest() {
 }
 
 void RequestHandler::handleGet() {
-	if (1/* 디렉토리 리스팅 on */ && isUrlDir) {
+	bool autoIndex = client->getServer().getServerConfig().getAutoindexOn();
+	if (autoIndex && isUrlDir) {
 		string resource = /*root + */requestUrl;
 		dirListing(resource, requestUrl);
-	} else if (1/* 디렉토리 리스팅 off */ && isUrlDir) {
+	} else if (!autoIndex && isUrlDir) {
 		throw StatusCode(400, BAD_REQUEST);
 	} else {
-		int fd = open(requestUrl.c_str(), O_RDONLY);
-		int n = read(fd, buf, sizeof(buf));
+		size_t idx = requestUrl.rfind('.');
+		string contentType = idx != SIZE_T_MAX ? string(requestUrl.begin() + idx + 1, requestUrl.end()) : "";
+		
+		int fd = open((HTTPInfo::root + requestUrl).c_str(), O_RDONLY);
+		int n = read(fd, buf, bodyMaxSize);
 		if (n < 0) {// max size 보다 클때도 추가
 			handleError(StatusCode(500, INTERVER_SERVER_ERROR));
 			return ;
 		}
 		responseBody->setStatusCode(StatusCode(200, OK));
-		responseBody->setContentType(requestBody->getContentType());
+		responseBody->setContentType(HTTPInfo::convertToMIME(contentType));
 		responseBody->setContentLength(n);
 		responseBody->setBody(buf, n);
 		close(fd);
@@ -158,7 +170,7 @@ void RequestHandler::handleCgiExecve() {
 }
 
 void RequestHandler::handleCgiRead() {
-	read(client->getPipeFd(), buf, sizeof(buf));
+	read(client->getPipeFd(), buf, bodyMaxSize);
 	close(client->getPipeFd());
 	string location(buf);
 	if (location == "ERROR") {
@@ -172,16 +184,22 @@ void RequestHandler::handleCgiRead() {
 void RequestHandler::handleError(const StatusCode& statusCode) {
 	responseBody->setStatusCode(statusCode);
 	responseBody->setContentType(TEXT_HTML);
-	string fileName = Utils::intToString(statusCode.getStatusCode()) + ".html";
+	string fileName = HTTPInfo::defaultRoot + "html/" + Utils::intToString(statusCode.getStatusCode()) + ".html";
 	int fd = open(fileName.c_str(), O_RDONLY);
-	int n = read(fd, buf, sizeof(buf));
+	if (fd < 0) {
+		Utils::exitWithErrmsg(INTERVER_SERVER_ERROR);
+	}
+	int n = read(fd, buf, bodyMaxSize);
+	if (n < 0) {
+		Utils::exitWithErrmsg(INTERVER_SERVER_ERROR);
+	}
 	responseBody->setContentLength(n);
 	responseBody->setBody(buf, n);
 }
 
 void RequestHandler::checkResource() {
 	struct stat buffer;
-	if (stat(requestUrl.c_str(), &buffer) != 0) {
+	if (stat((HTTPInfo::root + requestUrl).c_str(), &buffer) != 0) {
 		throw StatusCode(404, NOT_FOUND);
 	}
 	// 디렉토리 리스팅 해야함.....

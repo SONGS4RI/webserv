@@ -24,7 +24,10 @@ Request::Request(const int& clientSocketFd) {
 }
 
 Request::~Request() {
-	delete body;
+	if (body != NULL) {
+		delete body;
+		body = NULL;
+	}
 }
 
 bool Request::getLineAndCheckCRLF(const char& deli) {//////////////////////////////////
@@ -58,6 +61,7 @@ void Request::parseStartLine() {
 		buf[method.size() + 1 + requestUrl.size()] != ' ') {// 제대로 된 형식 이 아니라면
 		throw StatusCode(400, "잘못된 형식");
 	}
+	requestUrl = requestUrl == "/" ? "html/default.html" : requestUrl;
 	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion, serverConfig);
 	properties[METHOD] = method;
 	properties[REQUEST_URL] = requestUrl;

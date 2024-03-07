@@ -42,24 +42,22 @@ int EventManager::detectEvent() {
 	return (newEvents);
 }
 
-void EventManager::addEvent(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags,
+void EventManager::changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags,
 							intptr_t data, void* udata) {
 	struct kevent tmp_event;
 	EV_SET(&tmp_event, ident, filter, flags, fflags, data, udata);
 	change_list.push_back(tmp_event);
 }
 
-void EventManager::changeEvent(struct kevent* curEvent, int16_t filter, uint16_t flags,
-								uint32_t fflags, intptr_t data, void* udata) {
-	EV_SET(curEvent, curEvent->ident, filter, flags, fflags, data, udata);
-	change_list.push_back(*curEvent);
-}
-
 void EventManager::handleEvent(const int& eventIdx) {
 	struct kevent* curEvent = &event_list[eventIdx];
-	Utils::log(Utils::intToString(curEvent->ident) + " Event 처리중...", GREEN);
+	Utils::log(Utils::intToString(curEvent->ident) + "번 Event 처리중...", GREEN);
 	SocketManager* sm = SocketManager::getInstance();
 	Client* client = sm->getClient(curEvent->ident);
+	if (curEvent->flags & EV_DELETE) {
+		Utils::log(Utils::intToString(curEvent->ident) + "번 Event 삭제됨", GREEN);
+		return ;
+	}
 	if (curEvent->flags & EV_ERROR) {// 에러
 		if (sm->isServerSocket(curEvent->ident)) {
 			Utils::exitWithErrmsg("Server Socket Error");
@@ -77,12 +75,12 @@ void EventManager::handleEvent(const int& eventIdx) {
 					return ;
 				}
 				sm->addClient(curEvent->ident, clientSocket);//throw errCode 발생 가능
-				addEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+				changeEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 			} catch (StatusCode& errCode) {
 				//accept는 성공했는데 다른 문제가 발생한 경우 -> 즉시 에러 리스폰스 만든다.
 				Utils::log("accept() Successed But Something went wrong", YELLOW);
 				Response*	errResponse = new Response(errCode);
-				addEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, errResponse);
+				changeEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, errResponse);
 			}
 		} else if (curEvent->udata == NULL) {
 			// 클라이언트의 처리 상태에 따라 이벤트 처리
@@ -93,8 +91,8 @@ void EventManager::handleEvent(const int& eventIdx) {
 				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": " +
 				(request->getStatus() == PARSE_DONE ? "Parse Done" : "Parse Error: " + request->getStatusCode().getMessage()), GREEN);
 				// changeEvent(curEvent, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-				// addEvent(curEvent->ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, request);
-				changeEvent(curEvent, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, request);
+				// changeEvent(curEvent->ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, request);
+				changeEvent(curEvent->ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, request);
 			}
 		}
 	} else if (curEvent->filter ==  EVFILT_WRITE) {// 쓰기
@@ -106,7 +104,12 @@ void EventManager::handleEvent(const int& eventIdx) {
 			if (responseBody != NULL) {// cgi 아니라면
 				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Response Created: " +
 				responseBody->getStatusCode().getMessage(), GREEN);
-				Response* response = new Response(responseBody);
+				Response* response; 
+				if (responseBody->getStatusCode().getStatusCode() >= 400) {
+					response = new Response(responseBody->getStatusCode());
+				} else {
+					response = new Response(responseBody);
+				}
 				client->setResponse(response);
 			}
 		} else {//client->getResponse() != NULL
@@ -116,7 +119,7 @@ void EventManager::handleEvent(const int& eventIdx) {
 			if (response->isDone()) {
 				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Write Done", GREEN);
 				sm->disconnectClient(curEvent->ident);
-				changeEvent(curEvent, EVFILT_READ, EV_DISABLE, 0, 0, NULL);
+				changeEvent(curEvent->ident, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
 			}
 		}
 	}
