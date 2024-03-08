@@ -67,7 +67,7 @@ void RequestHandler::handleGet() {
 		size_t idx = requestUrl.rfind('.');
 		string contentType = idx != SIZE_T_MAX ? string(requestUrl.begin() + idx + 1, requestUrl.end()) : "";
 		
-		int fd = open((HTTPInfo::root + requestUrl).c_str(), O_RDONLY);
+		int fd = open((HTTPInfo::serverRoot + requestUrl).c_str(), O_RDONLY);
 		int n = read(fd, buf, bodyMaxSize);
 		if (n < 0) {// max size 보다 클때도 추가
 			handleError(StatusCode(500, INTERVER_SERVER_ERROR));
@@ -197,7 +197,7 @@ void RequestHandler::handleError(const StatusCode& statusCode) {
 
 void RequestHandler::checkResource() {
 	struct stat buffer;
-	if (stat((HTTPInfo::root + requestUrl).c_str(), &buffer) != 0) {
+	if (stat((HTTPInfo::serverRoot + requestUrl).c_str(), &buffer) != 0) {
 		throw StatusCode(404, string(NOT_FOUND) + ": " + requestUrl);
 	}
 	// 디렉토리 리스팅 해야함.....
