@@ -79,8 +79,9 @@ void EventManager::handleEvent(const int& eventIdx) {
 			} catch (StatusCode& errCode) {
 				//accept는 성공했는데 다른 문제가 발생한 경우 -> 즉시 에러 리스폰스 만든다.
 				Utils::log("accept() Successed But Something went wrong", YELLOW);
-				Response*	errResponse = new Response(errCode, client->getServer().getServerConfig().getPort());
-				changeEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, errResponse);
+				// Response*	errResponse = new Response(errCode); 에러코드로 바로 만드는것 추가해야할 듯
+				// Response*	errResponse = new Response(errCode, client->getServer().getServerConfig().getPort());
+				// changeEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, errResponse);//? 바꿔야할듯 쓰기로
 			}
 		} else if (curEvent->udata == NULL) {
 			// 클라이언트의 처리 상태에 따라 이벤트 처리
@@ -104,12 +105,12 @@ void EventManager::handleEvent(const int& eventIdx) {
 			if (responseBody != NULL) {// cgi 아니라면
 				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Response Created: " +
 				responseBody->getStatusCode().getMessage(), GREEN);
-				Response* response; 
-				if (responseBody->getStatusCode().getStatusCode() >= 400) {
-					response = new Response(responseBody->getStatusCode(), client->getServer().getServerConfig().getPort());
-				} else {
-					response = new Response(responseBody);
-				}
+				Response* response= new Response(responseBody);
+				// if (responseBody->getStatusCode().getStatusCode() >= 400) {
+				// 	response = new Response(responseBody->getStatusCode(), client->getServer().getServerConfig().getPort());
+				// } else {
+				// 	response = new Response(responseBody);
+				// }
 				client->setResponse(response);
 			}
 		} else {//client->getResponse() != NULL

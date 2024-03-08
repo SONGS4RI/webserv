@@ -182,7 +182,7 @@ void RequestHandler::handleCgiRead() {
 void RequestHandler::handleError(const StatusCode& statusCode) {
 	responseBody->setStatusCode(statusCode);
 	responseBody->setContentType(TEXT_HTML);
-	string fileName = HTTPInfo::defaultRoot + "html/" + Utils::intToString(statusCode.getStatusCode()) + ".html";
+	string fileName = HTTPInfo::defaultRoot + "html/" + "error" + ".html";// config 에서 받아 써야함
 	int fd = open(fileName.c_str(), O_RDONLY);
 	if (fd < 0) {
 		Utils::exitWithErrmsg(INTERVER_SERVER_ERROR);
