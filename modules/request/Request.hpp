@@ -24,14 +24,13 @@ class Request {
 		string leftOverBuffer;
 		RequestBody* body;
 		map<string, string> properties;
-		int clientSocketFd;
-		const Config* serverConfig;
+		const Client* client;
 		ERequestStatus status;
 		StatusCode statusCode;
 		istringstream readbuf;
 	public:
 		Request();
-		Request(const int& clientSocketFd);
+		Request(const Client* client);
 		~Request();
 
 		void parseRequest(Client& client);

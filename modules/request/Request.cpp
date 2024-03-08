@@ -10,7 +10,7 @@
 
 using namespace std;
 
-Request::Request(const int& clientSocketFd) {
+Request::Request(const Client* client) {
 	memset(buf, 0, TMP_SIZE);
 	this->readenContentLength = 0;
 	this->leftOverBuffer = "";
@@ -19,8 +19,7 @@ Request::Request(const int& clientSocketFd) {
 	this->status = START_LINE;
 	this->statusCode = StatusCode();
 	this->readbuf.clear();
-	this->clientSocketFd = clientSocketFd;// 필요없을 수 도 있음
-	this->serverConfig = SocketManager::getInstance()->getServerConfig(clientSocketFd);
+	this->client = client;
 }
 
 Request::~Request() {
@@ -58,11 +57,14 @@ void Request::parseStartLine() {
 	string method, requestUrl, httpVersion;
 	startLine >> method >> requestUrl >> httpVersion;
 	if (!startLine.eof() || startLine.fail() || buf[method.size()] != ' ' ||
-		buf[method.size() + 1 + requestUrl.size()] != ' ') {// 제대로 된 형식 이 아니라면
+		buf[method.size() + 1 + requestUrl.size()] != ' ') {
 		throw StatusCode(400, "잘못된 형식");
 	}
-	requestUrl = requestUrl == "/" ? "html/default.html" : requestUrl;
-	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion, serverConfig);
+	requestUrl = requestUrl == "/" ? "html/default.html" : requestUrl;// 루트 페이지
+	size_t lidx = requestUrl.front() == '/';
+	requestUrl = string(requestUrl.begin() + lidx, requestUrl.end());
+
+	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion, &client->getServer().getServerConfig());
 	properties[METHOD] = method;
 	properties[REQUEST_URL] = requestUrl;
 	status = HEADER;

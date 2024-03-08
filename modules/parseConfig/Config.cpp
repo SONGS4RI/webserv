@@ -109,7 +109,7 @@ const EConfigType	Config::getType() const { return (type);}
 
 map<string, Config>	Config::getLocations() { return (locations);}
 
-int	Config::getPort() { return (port);}
+const int&	Config::getPort() const { return (port);}
 
 string	Config::getServerName() { return (serverName);}
 

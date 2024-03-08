@@ -12,6 +12,7 @@ RequestHandler::RequestHandler(const Request* request, Client* client) {
 	this->responseBody = new ResponseBody(request->getStatusCode());
 	this->bodyMaxSize = 0;
 	this->buf = NULL;
+	this->config = &client->getServer().getServerConfig();
 	if (request->getStatus() != ERROR) {
 		this->bodyMaxSize =  client->getServer().getServerConfig().getClientMaxBodySize();
 		this->buf = new char[bodyMaxSize];

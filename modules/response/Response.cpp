@@ -13,7 +13,7 @@ Response::Response(StatusCode errCode) : status(RP_STATUS_LINE), nextIdx(0) , st
 	StatusCode	redirCode(303, SEE_OTHERS);
 	setStatusLine(redirCode);
 	
-	header += "Location:html/" + Utils::intToString(errCode.getStatusCode()) + ".html\r\n\r\n";
+	header += "Location:http://localhost:" + Utils::intToString(8080) + "/html/" + Utils::intToString(errCode.getStatusCode()) + ".html\r\n\r\n";
 }
 
 void	Response::writeToSocket(int fd) {
