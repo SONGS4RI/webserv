@@ -16,7 +16,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
-    font-size: 100px;
+    font-size: 50px;
 	color: red;
   }
   .home-button {
@@ -37,8 +37,19 @@
 </head>
 <body>
 
-	<div class="centered-text"><p>405</p><p>FORBIDDEN</p></div>
-	<a href="http://localhost:8080/html/default.html" class="home-button">Main Page</a>
+<div class="centered-text"><p>Something Went Wrong</p></div>
+<a href="http://localhost/html/default.html" class="home-button">Main Page</a>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      var homeButton = document.querySelector('.home-button');
+      var currentPort = window.location.port;
+      // 기본 포트가 명시적으로 사용되지 않은 경우 80 또는 443을 사용할 수 있습니다.
+      // 이 예제에서는 window.location.port를 직접 사용하지만, 필요에 따라 기본값을 설정할 수 있습니다.
+      var newHref = `http://localhost:${currentPort}/html/default.html`;
+      homeButton.setAttribute('href', newHref);
+  });
+</script>
 
 </body>
 </html>

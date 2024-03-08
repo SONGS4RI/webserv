@@ -4,17 +4,18 @@
 
 Response::Response(ResponseBody* _body) : status(RP_STATUS_LINE), nextIdx(0) , statusLine("HTTP/1.1 "), body(_body) {
 	setStatusLine(_body->getStatusCode());
-	if (_body->getStatusCode().getStatusCode() == 200){
+	if (_body->getStatusCode().getStatusCode() == 200) {
 		setHeader();
 	}
+	// 에러인 경우 리스폰스 필요
 }
 
-Response::Response(StatusCode errCode, int port) : status(RP_STATUS_LINE), nextIdx(0) , statusLine("HTTP/1.1 "), body(NULL) {
-	StatusCode	redirCode(303, SEE_OTHERS);
-	setStatusLine(redirCode);
+// Response::Response(StatusCode errCode, int port) : status(RP_STATUS_LINE), nextIdx(0) , statusLine("HTTP/1.1 "), body(NULL) {
+// 	StatusCode	redirCode(303, SEE_OTHERS);
+// 	setStatusLine(redirCode);
 	
-	header += "Location:http://localhost:" + Utils::intToString(port) + "/html/" + Utils::intToString(errCode.getStatusCode()) + ".html\r\n\r\n";
-}
+// 	header += "Location:http://localhost:" + Utils::intToString(port) + "/html/" + Utils::intToString(errCode.getStatusCode()) + ".html\r\n\r\n";
+// }
 
 void	Response::writeToSocket(int fd) {
 	size_t	writeAmount;
