@@ -79,13 +79,13 @@ void EventManager::handleEvent(const int& eventIdx) {
 			} catch (StatusCode& errCode) {
 				//accept는 성공했는데 다른 문제가 발생한 경우 -> 즉시 에러 리스폰스 만든다.
 				Utils::log("accept() Successed But Something went wrong", YELLOW);
-				Response*	errResponse = new Response(errCode);
+				Response*	errResponse = new Response(errCode, client->getServer().getServerConfig().getPort());
 				changeEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, errResponse);
 			}
 		} else if (curEvent->udata == NULL) {
 			// 클라이언트의 처리 상태에 따라 이벤트 처리
 			Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Parsing", GREEN);
-			Request* request = client->getRequest(curEvent->ident);// NULL 이면 할당해서 주기
+			Request* request = client->getRequest();// NULL 이면 할당해서 주기
 			request->parseRequest(*client);
 			if (request->getStatus() == PARSE_DONE || request->getStatusCode().getStatusCode() >= 400) {
 				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": " +
@@ -106,7 +106,7 @@ void EventManager::handleEvent(const int& eventIdx) {
 				responseBody->getStatusCode().getMessage(), GREEN);
 				Response* response; 
 				if (responseBody->getStatusCode().getStatusCode() >= 400) {
-					response = new Response(responseBody->getStatusCode());
+					response = new Response(responseBody->getStatusCode(), client->getServer().getServerConfig().getPort());
 				} else {
 					response = new Response(responseBody);
 				}

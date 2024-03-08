@@ -22,7 +22,7 @@ class Response {
 	public:
 		bool	isDone();
 		Response(ResponseBody* _body);
-		Response(StatusCode errCode);
+		Response(StatusCode errCode, int port);
 		void	writeToSocket(int fd);
 		EResponseStatus getStatus() {return (status);};
 		~Response();
