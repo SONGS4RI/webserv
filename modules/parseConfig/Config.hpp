@@ -22,13 +22,13 @@ class Config {
 		string	serverName;//default webserv.com
 		string	root;//default /
 		/*서버, 로케이션 둘 다 있을 수 있음*/
-		string	index;//default 빈 문자열 에러처리 구현???
+		string	index;//default 빈 문자열
 		size_t	clientMaxBodySize;//default 1000000, int range벗어나면 에러
-		string	defaultErrorPage;//default 
+		string	defaultErrorPage;//default 빈 문자열
 		vector<string>	allowMethods;//default 비어있음
-		bool	autoindexOn;//default off
+		bool	autoindexOn;//default on
 		/* locations 에만 적용, 서버에는 비어있음 */
-		string	alias;//default 비어있음 꼭 써야할까???
+		string	alias;//default 빈 문자열
 
 		bool	isWrongClientMaxBodySize(const string& CMBS_String) const;
 		bool	isWrongPort(const string& portString) const;
@@ -50,6 +50,8 @@ class Config {
 		loc있는건 location config에 있으면 가져오고 없으면 서버config에서 가져옴*/
 		const size_t& getClientMaxBodySize() const;
 		const size_t& getClientMaxBodySize(string loc) const;
+		const string&	getDefaultErrorPage() const;
+		const string&	getDefaultErrorPage(string loc) const;
 		const string	getIndex() const;
 		const string	getIndex(string loc) const;
 		const bool&	getAutoindexOn() const;

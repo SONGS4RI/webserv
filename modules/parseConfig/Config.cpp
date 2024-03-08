@@ -4,11 +4,14 @@ Config::Config() {};
 
 Config::Config(Block& globalBlock, Block& serverBlock) {
 	type = SERVER_CONFIG;
-	clientMaxBodySize = 1000000;
+	port = 8080;
+	serverName = "webserv.com";
 	root = "/";
 	index = "";
-	autoindexOn = false;
-	
+	clientMaxBodySize = 1000000;
+	defaultErrorPage = "";
+	autoindexOn = true;
+	alias = "";
 	try
 	{
 		setByBlock(globalBlock);//global block
@@ -27,10 +30,11 @@ Config::Config(Config& serverConfig, Block& locationBlock) {
 	type = LOCATION_CONFIG;
 	port = serverConfig.getPort();
 	serverName = serverConfig.getServerName();
-	clientMaxBodySize = serverConfig.getClientMaxBodySize();
 	root = serverConfig.getRoot();
 	index = serverConfig.getIndex();
+	clientMaxBodySize = serverConfig.getClientMaxBodySize();
 	allowMethods = serverConfig.getAllowMethods();
+	defaultErrorPage = 
 	autoindexOn = serverConfig.getAutoindexOn();
 	setByBlock(locationBlock);
 }
@@ -52,9 +56,7 @@ void	Config::setByBlock(Block& block) {
 		index = it->second[0];
 	}
 	if ((it = block.directives.find("autoindex")) != block.directives.end()) {
-		if (it->second[0] == "on") {
-			autoindexOn = true;
-		} else {
+		if (it->second[0] == "off") {
 			autoindexOn = false;
 		}
 	}
@@ -82,13 +84,9 @@ void	Config::setByBlock(Block& block) {
 				throw "Error: wrong port in configfile";
 			}
 			port = atoi(it->second[0].c_str());
-		} else {
-			port = 8080;
 		}
 		if ((it = block.directives.find("server_name")) != block.directives.end()) {
 			serverName = it->second[0];
-		} else {
-			serverName = "webserv.com";
 		}
 	} else if (block.type == "location") {//로케이션블록에만 있는 지시어
 		if ((it = block.directives.find("alias")) != block.directives.end()) {
@@ -104,10 +102,11 @@ const EConfigType	Config::getType() const { return (type);}
 
 const int&	Config::getPort() const { return (port);}
 
+string	Config::getRoot() { return (root);}
+
 string	Config::getServerName() { return (serverName);}
 
 const size_t& Config::getClientMaxBodySize() const { return (clientMaxBodySize);}
-
 const size_t& Config::getClientMaxBodySize(string loc) const {
 	map<string, Config>::const_iterator it = locations.find(loc);
 	if (it != locations.end()) {
@@ -116,10 +115,16 @@ const size_t& Config::getClientMaxBodySize(string loc) const {
 	return (clientMaxBodySize);
 }
 
-string	Config::getRoot() { return (root);}
+const string&	Config::getDefaultErrorPage() const { return (defaultErrorPage);}
+const string&	Config::getDefaultErrorPage(string loc) const {
+	map<string, Config>::const_iterator it = locations.find(loc);
+	if (it != locations.end()) {
+		return (it->second.getDefaultErrorPage());
+	}
+	return (defaultErrorPage);
+}
 
 const string	Config::getIndex() const { return (index);}
-
 const string	Config::getIndex(string loc) const {
 	map<string, Config>::const_iterator it = locations.find(loc);
 	if (it != locations.end()) {
