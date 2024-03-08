@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <algorithm>
 #include "../utils/Enums.hpp"
 #include "ParseConfig.hpp"
 
