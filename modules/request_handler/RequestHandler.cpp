@@ -12,6 +12,7 @@ RequestHandler::RequestHandler(const Request* request, Client* client) {
 	this->responseBody = new ResponseBody(request->getStatusCode());
 	this->bodyMaxSize = 0;
 	this->buf = NULL;
+	this->config = &client->getServer().getServerConfig();
 	if (request->getStatus() != ERROR) {
 		this->bodyMaxSize =  client->getServer().getServerConfig().getClientMaxBodySize();
 		this->buf = new char[bodyMaxSize];
@@ -58,7 +59,7 @@ ResponseBody* RequestHandler::handleRequest() {
 void RequestHandler::handleGet() {
 	bool autoIndex = client->getServer().getServerConfig().getAutoindexOn();
 	if (autoIndex && isUrlDir) {
-		string resource = /*root + */requestUrl;
+		string resource = HTTPInfo::defaultRoot + requestUrl;
 		dirListing(resource, requestUrl);
 	} else if (!autoIndex && isUrlDir) {
 		throw StatusCode(400, BAD_REQUEST);
@@ -81,26 +82,23 @@ void RequestHandler::handleGet() {
 }
 
 void RequestHandler::dirListing(const string& resource, string& uri) {
-	// html 코드 생성
 	string autoIndexing = "<html><head><meta charset=\"UTF-8\"></head>" \
     "<style>body { background-color: white; font-family: Trebuchet MS;}</style>" \
-	"<body><h1>" + uri.substr(1) + " List</h1><ul>";
+	"<body><h1>" + uri + " List</h1><ul>";
 	if (uri.back() != '/') uri.push_back('/');
 	autoIndexing += "<table>";
 	struct dirent* entry;
+	string absoluteUri = "http://localhost:" + Utils::intToString(client->getServer().getServerConfig().getPort()) + "/" + resource.substr(HTTPInfo::defaultRoot.size()) + "/";
 	DIR* dp = opendir(resource.c_str());
 	if (dp != NULL) {
 		while ((entry = readdir(dp))) {
 			string entryName = entry->d_name;
-			string entryPath = uri + entryName;
 			if (entryName.front() == '.') continue;
-			// 상대 경로
-			autoIndexing += "<tr><td><a href='" + entryPath + "'>" + entryName + "</a></td></tr>";
+			autoIndexing += "<tr><td><a href='" + absoluteUri + entryName + "'>" + entryName + "</a></td></tr>";
 		}
-		closedir(dp);
 	}
+	closedir(dp);
 	autoIndexing += "</table></ul></body></html>";
-	// 응답 body에 써주기
 	responseBody->setBody(autoIndexing.c_str(), autoIndexing.size());
 	responseBody->setContentLength(autoIndexing.size());
 	responseBody->setContentType(TEXT_HTML);
@@ -200,7 +198,7 @@ void RequestHandler::handleError(const StatusCode& statusCode) {
 void RequestHandler::checkResource() {
 	struct stat buffer;
 	if (stat((HTTPInfo::root + requestUrl).c_str(), &buffer) != 0) {
-		throw StatusCode(404, NOT_FOUND);
+		throw StatusCode(404, string(NOT_FOUND) + ": " + requestUrl);
 	}
 	// 디렉토리 리스팅 해야함.....
 	isUrlDir = S_ISDIR(buffer.st_mode);

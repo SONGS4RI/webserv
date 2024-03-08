@@ -30,6 +30,7 @@ Config::Config(Config& serverConfig, Block& locationBlock) {
 	clientMaxBodySize = serverConfig.getClientMaxBodySize();
 	root = serverConfig.getRoot();
 	index = serverConfig.getIndex();
+	allowMethods = serverConfig.getAllowMethods();
 	autoindexOn = serverConfig.getAutoindexOn();
 	setByBlock(locationBlock);
 }
@@ -62,13 +63,16 @@ void	Config::setByBlock(Block& block) {
 		}
 	}
 	if ((it = block.directives.find("allow_methods")) != block.directives.end()) {
-			for (size_t i = 0; i < it->second.size(); i++) {
-				if (isWrongAllowMethod(it->second[i]) == true) {
-					throw "Error: allow_methods is wrong in configfile";
-				}
+		vector<string>	allowMethodsBlock = it->second;
+		for (size_t i = 0; i < allowMethodsBlock.size(); i++) {
+			if (isWrongAllowMethod(allowMethodsBlock[i]) == true) {
+				throw "Error: allow_methods is wrong in configfile";
+			}
+			if (find(allowMethods.begin(), allowMethods.end(), allowMethodsBlock[i]) == allowMethods.end()) {
 				allowMethods.push_back(it->second[i]);
 			}
 		}
+	}
 	if (block.type == "server") {//서버블록에만 있는 지시어
 		if ((it = block.directives.find("listen")) != block.directives.end()) {
 			if (isWrongPort(it->second[0]) == true) {
@@ -105,7 +109,7 @@ const EConfigType	Config::getType() const { return (type);}
 
 map<string, Config>	Config::getLocations() { return (locations);}
 
-int	Config::getPort() { return (port);}
+const int&	Config::getPort() const { return (port);}
 
 string	Config::getServerName() { return (serverName);}
 
@@ -143,6 +147,17 @@ void	Config::printAllInfo() const {
 	} else if (this->getType() == LOCATION_CONFIG) {
 		cout << "\t======== LOCATION =========" << endl;
 		cout << "\ttype: LOCATION_CONFIG" << endl;
+		cout << "\tport: " << port << endl;
+		cout << "\tserverName: " << serverName << endl;
+		cout << "\tclientMaxBodySize: " << clientMaxBodySize << endl;
+		cout << "\troot: " << root << endl;
+		cout << "\tindex: " << index << endl;
+		cout << "\tautoindex: " << autoindexOn << endl;
+		cout << "\tallowMethods: ";
+		for (size_t i = 0; i < this->allowMethods.size(); i++) {
+			cout << this->allowMethods[i] << ' ';
+		}
+		cout << endl;
 		cout << "\treturn: " << this->returnRedir << endl;
 		cout << "\talias: " << this->alias << endl;
 	}

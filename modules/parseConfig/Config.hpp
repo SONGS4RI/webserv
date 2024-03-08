@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <algorithm>
 #include "../utils/Enums.hpp"
 #include "ParseConfig.hpp"
 
@@ -41,7 +42,7 @@ class Config {
 		/* Getter */
 		const EConfigType	getType() const;
 		map<string, Config>	getLocations();
-		int	getPort();
+		const int&	getPort() const;
 		string	getServerName();
 		const size_t& getClientMaxBodySize() const;
 		string	getRoot();

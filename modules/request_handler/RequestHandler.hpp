@@ -11,6 +11,7 @@
 #include "../request/Request.hpp"
 #include "../request/RequestBody.hpp"
 #include "../response/ResponseBody.hpp"
+#include "../server/SocketManager.hpp"
 #include "../server/Client.hpp"
 using namespace std;
 
@@ -21,6 +22,7 @@ class RequestHandler {
 		RequestBody* requestBody;
 		ResponseBody* responseBody;
 		Client* client;
+		const Config*	config;
 		bool isUrlDir;
 		char* buf;// 동적인 것으로 변경
 		size_t bodyMaxSize;

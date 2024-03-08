@@ -9,11 +9,11 @@ Response::Response(ResponseBody* _body) : status(RP_STATUS_LINE), nextIdx(0) , s
 	}
 }
 
-Response::Response(StatusCode errCode) : status(RP_STATUS_LINE), nextIdx(0) , statusLine("HTTP/1.1 "), body(NULL) {
+Response::Response(StatusCode errCode, int port) : status(RP_STATUS_LINE), nextIdx(0) , statusLine("HTTP/1.1 "), body(NULL) {
 	StatusCode	redirCode(303, SEE_OTHERS);
 	setStatusLine(redirCode);
 	
-	header += "Location:html/" + Utils::intToString(errCode.getStatusCode()) + ".html\r\n\r\n";
+	header += "Location:http://localhost:" + Utils::intToString(port) + "/html/" + Utils::intToString(errCode.getStatusCode()) + ".html\r\n\r\n";
 }
 
 void	Response::writeToSocket(int fd) {

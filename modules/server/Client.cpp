@@ -25,9 +25,9 @@ void Client::setPid(const int& _pid) { pid = _pid;}
 
 const Server&	Client::getServer() const { return(myServer);}
 
-Request* Client::getRequest(const int& clientSocketFd) {
+Request* Client::getRequest() {
 	if (request == NULL) {
-		request = new Request(clientSocketFd);
+		request = new Request(this);
 	}
 	return (request);
 }
