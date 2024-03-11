@@ -24,6 +24,7 @@ class RequestHandler {
 		Client* client;
 		const Config*	config;
 		bool isUrlDir;
+		bool isUrlIndex;
 		char* buf;// 동적인 것으로 변경
 		size_t bodyMaxSize;
 		void checkResource();

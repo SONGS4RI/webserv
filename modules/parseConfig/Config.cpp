@@ -6,10 +6,10 @@ Config::Config(Block& globalBlock, Block& serverBlock) {
 	type = SERVER_CONFIG;
 	port = 8080;
 	serverName = "webserv.com";
-	root = "/";
+	root = "/root";
 	index = "";
 	clientMaxBodySize = 1000000;
-	defaultErrorPage = "";
+	defaultErrorPage = "error.html";
 	autoindexOn = true;
 	alias = "";
 	try
@@ -71,7 +71,10 @@ void	Config::setByBlock(Block& block) {
 			cout << it->second[0] << endl;
 			throw "Error: root Path is wrong in configfile";
 		}
-		root = "/root" + it->second[0];
+		root = "/root" + (it->second[0] == "/" ? "" : it->second[0]);
+		if (root.back() == '/') {
+			throw "Error: root Path is wrong in configfile";
+		}
 	}
 	if (block.type == "server") {//서버블록에만 있는 지시어
 		if ((it = block.directives.find("autoindex")) != block.directives.end()) {
@@ -130,7 +133,7 @@ const string	Config::getIndex(string loc) const {
 	if (it != locations.end()) {
 		return (it->second.getIndex());
 	}
-	return (index);
+	return ("");
 }
 
 const bool&	Config::getAutoindexOn() const { return (autoindexOn);}

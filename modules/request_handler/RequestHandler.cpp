@@ -13,8 +13,9 @@ RequestHandler::RequestHandler(const Request* request, Client* client) {
 	this->bodyMaxSize = 0;
 	this->buf = NULL;
 	this->config = &client->getServer().getServerConfig();
+	this->isUrlIndex = request->getIsUrlIndex();
 	if (request->getStatus() != ERROR) {
-		this->bodyMaxSize =  client->getServer().getServerConfig().getClientMaxBodySize();
+		this->bodyMaxSize =  config->getClientMaxBodySize();
 		this->buf = new char[bodyMaxSize];
 		this->method = request->getProperties().find(METHOD)->second;
 		this->requestUrl = request->getProperties().find(REQUEST_URL)->second;//서버 루트 url + requestUrl 해주어야함
@@ -58,25 +59,27 @@ ResponseBody* RequestHandler::handleRequest() {
 
 void RequestHandler::handleGet() {
 	bool autoIndex = config->getAutoindexOn();
-	if (config->getIndex() != "") {
-		autoIndex = false;
-		isUrlDir = false;
-	}
-	if (autoIndex && isUrlDir) {
+	// if (config->getIndex() != "") {
+	// 	Utils::log("인덱스 요청", YELLOW);
+	// 	autoIndex = false;
+	// 	isUrlDir = false;
+	// }
+	if (autoIndex && isUrlDir && !isUrlIndex) {
 		string resource = HTTPInfo::defaultRoot + requestUrl;
 		dirListing(resource, requestUrl);
-	} else if (!autoIndex && isUrlDir) {
+	} else if (!autoIndex && isUrlDir && !isUrlIndex) {
 		throw StatusCode(400, BAD_REQUEST);
 	} else {
 		size_t idx = requestUrl.rfind('.');
 		string contentType = idx != SIZE_T_MAX ? string(requestUrl.begin() + idx + 1, requestUrl.end()) : "";
-		
-		cout << HTTPInfo::defaultRoot + requestUrl << "\n";///////////////////////
+		cout << HTTPInfo::defaultRoot + requestUrl << "\n";////////////////////////////////
 		int fd = open((HTTPInfo::defaultRoot + requestUrl).c_str(), O_RDONLY);
 		int n = read(fd, buf, bodyMaxSize);
-		if (n < 0) {// max size 보다 클때도 추가
-			handleError(StatusCode(500, INTERVER_SERVER_ERROR));
-			return ;
+		if (n < 0 ) {// max size 보다 클때도 추가
+			throw StatusCode(500, INTERVER_SERVER_ERROR);
+		}
+		if (n > bodyMaxSize) {
+			throw StatusCode(400, BAD_REQUEST);
 		}
 		responseBody->setStatusCode(StatusCode(200, OK));
 		responseBody->setContentType(HTTPInfo::convertToMIME(contentType));
@@ -187,7 +190,7 @@ void RequestHandler::handleCgiRead() {
 void RequestHandler::handleError(const StatusCode& statusCode) {
 	responseBody->setStatusCode(statusCode);
 	responseBody->setContentType(TEXT_HTML);
-	string fileName = HTTPInfo::defaultRoot + "/root/html/error.html";// config 에서 받아 써야함
+	string fileName = HTTPInfo::defaultRoot + "/root/html/" + config->getDefaultErrorPage();// config 에서 받아 써야함
 	int fd = open(fileName.c_str(), O_RDONLY);
 	int n = read(fd, buf, bodyMaxSize);
 	if (n < 0) {
@@ -199,8 +202,6 @@ void RequestHandler::handleError(const StatusCode& statusCode) {
 
 void RequestHandler::checkResource() {
 	struct stat buffer;
-	cout << HTTPInfo::defaultRoot<< "\n";
-	cout << requestUrl << "\n";
 	if (stat((HTTPInfo::defaultRoot + requestUrl).c_str(), &buffer) != 0) {
 		throw StatusCode(404, string(NOT_FOUND) + ": " + requestUrl);
 	}
