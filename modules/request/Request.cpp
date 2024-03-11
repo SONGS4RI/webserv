@@ -67,9 +67,8 @@ void Request::parseStartLine() {
 	if (index != "") {
 		isUrlIndex = true;
 	}
-	requestUrl = serverConfig.getRoot() + (isUrlIndex ? index : requestUrl);
-	cout << requestUrl << "\n";//////////////////////////////////////////////////
 	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion, &client->getServer().getServerConfig());
+	requestUrl = serverConfig.getRoot() + (isUrlIndex ? index : requestUrl);
 	properties[METHOD] = method;
 	properties[REQUEST_URL] = requestUrl;
 	status = HEADER;

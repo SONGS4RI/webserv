@@ -59,11 +59,6 @@ ResponseBody* RequestHandler::handleRequest() {
 
 void RequestHandler::handleGet() {
 	bool autoIndex = config->getAutoindexOn();
-	// if (config->getIndex() != "") {
-	// 	Utils::log("인덱스 요청", YELLOW);
-	// 	autoIndex = false;
-	// 	isUrlDir = false;
-	// }
 	if (autoIndex && isUrlDir && !isUrlIndex) {
 		string resource = HTTPInfo::defaultRoot + requestUrl;
 		dirListing(resource, requestUrl);
@@ -74,11 +69,11 @@ void RequestHandler::handleGet() {
 		string contentType = idx != SIZE_T_MAX ? string(requestUrl.begin() + idx + 1, requestUrl.end()) : "";
 		cout << HTTPInfo::defaultRoot + requestUrl << "\n";////////////////////////////////
 		int fd = open((HTTPInfo::defaultRoot + requestUrl).c_str(), O_RDONLY);
-		int n = read(fd, buf, bodyMaxSize);
+		int n = read(fd, buf, sizeof(buf));
 		if (n < 0 ) {// max size 보다 클때도 추가
 			throw StatusCode(500, INTERVER_SERVER_ERROR);
 		}
-		if (n > bodyMaxSize) {
+		if (read(fd, buf, sizeof(buf))) {
 			throw StatusCode(400, BAD_REQUEST);
 		}
 		responseBody->setStatusCode(StatusCode(200, OK));
@@ -96,12 +91,13 @@ void RequestHandler::dirListing(const string& resource, string& uri) {
 	if (uri.back() != '/') uri.push_back('/');
 	autoIndexing += "<table>";
 	struct dirent* entry;
-	string absoluteUri = "http://localhost:" + Utils::intToString(config->getPort()) + resource.substr(HTTPInfo::defaultRoot.size()) + "/";
+	string absoluteUri = "http://localhost:" + Utils::intToString(config->getPort()) + resource.substr(HTTPInfo::defaultRoot.size() + config->getRoot().size()) + "/";
 	DIR* dp = opendir(resource.c_str());
 	if (dp != NULL) {
 		while ((entry = readdir(dp))) {
 			string entryName = entry->d_name;
 			if (entryName.front() == '.') continue;
+			cout << absoluteUri + entryName << "\n";//////////////////////////////////////////
 			autoIndexing += "<tr><td><a href='" + absoluteUri + entryName + "'>" + entryName + "</a></td></tr>";
 		}
 	}
@@ -192,12 +188,13 @@ void RequestHandler::handleError(const StatusCode& statusCode) {
 	responseBody->setContentType(TEXT_HTML);
 	string fileName = HTTPInfo::defaultRoot + "/root/html/" + config->getDefaultErrorPage();// config 에서 받아 써야함
 	int fd = open(fileName.c_str(), O_RDONLY);
-	int n = read(fd, buf, bodyMaxSize);
+	char errorBuf[2048];
+	int n = read(fd, errorBuf, sizeof(errorBuf));
 	if (n < 0) {
 		Utils::exitWithErrmsg(INTERVER_SERVER_ERROR);
 	}
 	responseBody->setContentLength(n);
-	responseBody->setBody(buf, n);
+	responseBody->setBody(errorBuf, n);
 }
 
 void RequestHandler::checkResource() {
