@@ -14,6 +14,12 @@
 		"vector": "cpp",
 		"iterator": "cpp",
 		"iosfwd": "cpp",
-		"deque": "cpp"
+		"deque": "cpp",
+		"new": "cpp",
+		"iostream": "cpp",
+		"filesystem": "cpp",
+		"stdexcept": "cpp",
+		"utility": "cpp",
+		"algorithm": "cpp"
 	}
 }
