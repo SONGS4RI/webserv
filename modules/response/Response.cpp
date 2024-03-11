@@ -4,9 +4,7 @@
 
 Response::Response(ResponseBody* _body) : status(RP_STATUS_LINE), nextIdx(0) , statusLine("HTTP/1.1 "), body(_body) {
 	setStatusLine(_body->getStatusCode());
-	if (_body->getStatusCode().getStatusCode() == 200) {
-		setHeader();
-	}
+	setHeader();
 	// 에러인 경우 리스폰스 필요
 }
 
@@ -83,10 +81,19 @@ Response::~Response(){
 //콘텐츠타입, 길이는 GET 200에서만 있음
 void	Response::setHeader() {
 	header.reserve(200);
-	header += "Content-Type: ";
-	header += body->getContentType() + "\r\n";
-	header += "Content-Length: ";
-	header += Utils::intToString(body->getContentLength()) + "\r\n\r\n";
+	if (body->getContentType() != "") {
+		header += "Content-Type: ";
+		header += body->getContentType() + "\r\n";
+	}
+	if (body->getContentLength() != 0) {
+		header += "Content-Length: ";
+		header += Utils::intToString(body->getContentLength()) + "\r\n";
+	}
+	if (body->getLocation() != "") {
+		header += "Location: ";
+		header += body->getLocation() + "\r\n";
+	}
+	header += "\r\n";
 }
 
 void	Response::setStatusLine(const StatusCode& statusCode) {

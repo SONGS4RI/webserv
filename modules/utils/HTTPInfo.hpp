@@ -34,7 +34,7 @@ class HTTPInfo {
 		static void isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion, const Config* serverConfig);
 		static void isValidHeaderField(map<string, string>& properties);
 		static string convertToMIME(const string& contentType);
-		static string root;
+		static string serverRoot;
 		static string defaultRoot;
 };
 

@@ -34,7 +34,7 @@ Config::Config(Config& serverConfig, Block& locationBlock) {
 	index = serverConfig.getIndex();
 	clientMaxBodySize = serverConfig.getClientMaxBodySize();
 	allowMethods = serverConfig.getAllowMethods();
-	defaultErrorPage = 
+	defaultErrorPage = serverConfig.getDefaultErrorPage();
 	autoindexOn = serverConfig.getAutoindexOn();
 	setByBlock(locationBlock);
 }
@@ -55,11 +55,6 @@ void	Config::setByBlock(Block& block) {
 	if ((it = block.directives.find("index")) != block.directives.end()) {
 		index = it->second[0];
 	}
-	if ((it = block.directives.find("autoindex")) != block.directives.end()) {
-		if (it->second[0] == "off") {
-			autoindexOn = false;
-		}
-	}
 	if ((it = block.directives.find("allow_methods")) != block.directives.end()) {
 		vector<string>	allowMethodsBlock = it->second;
 		for (size_t i = 0; i < allowMethodsBlock.size(); i++) {
@@ -71,13 +66,18 @@ void	Config::setByBlock(Block& block) {
 			}
 		}
 	}
+	if ((it = block.directives.find("root")) != block.directives.end()) {
+		if (isWrongPath(it->second[0]) == true) {
+			cout << it->second[0] << endl;
+			throw "Error: root Path is wrong in configfile";
+		}
+		root = "/root" + it->second[0];
+	}
 	if (block.type == "server") {//서버블록에만 있는 지시어
-		if ((it = block.directives.find("root")) != block.directives.end()) {
-			if (isWrongPath(it->second[0]) == true) {
-				cout << it->second[0] << endl;
-				throw "Error: root Path is wrong in configfile";
+		if ((it = block.directives.find("autoindex")) != block.directives.end()) {
+			if (it->second[0] == "off") {
+				autoindexOn = false;
 			}
-			root = it->second[0];
 		}
 		if ((it = block.directives.find("listen")) != block.directives.end()) {
 			if (isWrongPort(it->second[0]) == true) {
@@ -102,7 +102,7 @@ const EConfigType	Config::getType() const { return (type);}
 
 const int&	Config::getPort() const { return (port);}
 
-string	Config::getRoot() { return (root);}
+const string&	Config::getRoot() const { return (root);}
 
 string	Config::getServerName() { return (serverName);}
 

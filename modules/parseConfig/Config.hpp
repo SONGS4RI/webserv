@@ -44,7 +44,7 @@ class Config {
 		const EConfigType	getType() const;
 		const int&	getPort() const;
 		string	getServerName();
-		string	getRoot();
+		const string&	getRoot() const;
 		/* location 에 있을 수 있는 지시어들.
 		loc없는건 서버 config에서 가져옴
 		loc있는건 location config에 있으면 가져오고 없으면 서버config에서 가져옴*/

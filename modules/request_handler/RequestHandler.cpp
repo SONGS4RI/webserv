@@ -57,7 +57,11 @@ ResponseBody* RequestHandler::handleRequest() {
 }
 
 void RequestHandler::handleGet() {
-	bool autoIndex = client->getServer().getServerConfig().getAutoindexOn();
+	bool autoIndex = config->getAutoindexOn();
+	if (config->getIndex() != "") {
+		autoIndex = false;
+		isUrlDir = false;
+	}
 	if (autoIndex && isUrlDir) {
 		string resource = HTTPInfo::defaultRoot + requestUrl;
 		dirListing(resource, requestUrl);
@@ -67,7 +71,8 @@ void RequestHandler::handleGet() {
 		size_t idx = requestUrl.rfind('.');
 		string contentType = idx != SIZE_T_MAX ? string(requestUrl.begin() + idx + 1, requestUrl.end()) : "";
 		
-		int fd = open((HTTPInfo::serverRoot + requestUrl).c_str(), O_RDONLY);
+		cout << HTTPInfo::defaultRoot + requestUrl << "\n";///////////////////////
+		int fd = open((HTTPInfo::defaultRoot + requestUrl).c_str(), O_RDONLY);
 		int n = read(fd, buf, bodyMaxSize);
 		if (n < 0) {// max size 보다 클때도 추가
 			handleError(StatusCode(500, INTERVER_SERVER_ERROR));
@@ -88,7 +93,7 @@ void RequestHandler::dirListing(const string& resource, string& uri) {
 	if (uri.back() != '/') uri.push_back('/');
 	autoIndexing += "<table>";
 	struct dirent* entry;
-	string absoluteUri = "http://localhost:" + Utils::intToString(client->getServer().getServerConfig().getPort()) + "/" + resource.substr(HTTPInfo::defaultRoot.size()) + "/";
+	string absoluteUri = "http://localhost:" + Utils::intToString(config->getPort()) + resource.substr(HTTPInfo::defaultRoot.size()) + "/";
 	DIR* dp = opendir(resource.c_str());
 	if (dp != NULL) {
 		while ((entry = readdir(dp))) {
@@ -182,11 +187,8 @@ void RequestHandler::handleCgiRead() {
 void RequestHandler::handleError(const StatusCode& statusCode) {
 	responseBody->setStatusCode(statusCode);
 	responseBody->setContentType(TEXT_HTML);
-	string fileName = HTTPInfo::defaultRoot + "html/" + "error" + ".html";// config 에서 받아 써야함
+	string fileName = HTTPInfo::defaultRoot + "/root/html/error.html";// config 에서 받아 써야함
 	int fd = open(fileName.c_str(), O_RDONLY);
-	if (fd < 0) {
-		Utils::exitWithErrmsg(INTERVER_SERVER_ERROR);
-	}
 	int n = read(fd, buf, bodyMaxSize);
 	if (n < 0) {
 		Utils::exitWithErrmsg(INTERVER_SERVER_ERROR);
@@ -197,11 +199,14 @@ void RequestHandler::handleError(const StatusCode& statusCode) {
 
 void RequestHandler::checkResource() {
 	struct stat buffer;
-	if (stat((HTTPInfo::serverRoot + requestUrl).c_str(), &buffer) != 0) {
+	cout << HTTPInfo::defaultRoot<< "\n";
+	cout << requestUrl << "\n";
+	if (stat((HTTPInfo::defaultRoot + requestUrl).c_str(), &buffer) != 0) {
 		throw StatusCode(404, string(NOT_FOUND) + ": " + requestUrl);
 	}
 	// 디렉토리 리스팅 해야함.....
 	isUrlDir = S_ISDIR(buffer.st_mode);
+
 	if (method == POST && !isUrlDir) {
 		throw StatusCode(400, BAD_REQUEST);
 	}

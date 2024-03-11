@@ -7,6 +7,7 @@
 #include "../utils/Utils.hpp"
 #include "../utils/StatusCode.hpp"
 #include "../server/SocketManager.hpp"
+#include "../parseConfig/Config.hpp"
 
 using namespace std;
 
@@ -60,10 +61,10 @@ void Request::parseStartLine() {
 		buf[method.size() + 1 + requestUrl.size()] != ' ') {
 		throw StatusCode(400, "잘못된 형식");
 	}
-	requestUrl = requestUrl == "/" ? "html/default.html" : requestUrl;// 루트 페이지
-	size_t lidx = requestUrl.front() == '/';
-	requestUrl = string(requestUrl.begin() + lidx, requestUrl.end());
+	const Config& serverConfig = client->getServer().getServerConfig();
 
+	requestUrl = requestUrl == "/" ? serverConfig.getRoot() + serverConfig.getIndex() : serverConfig.getRoot() + requestUrl;// 루트 페이지
+	cout << requestUrl << "\n";///////////////////////////////////
 	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion, &client->getServer().getServerConfig());
 	properties[METHOD] = method;
 	properties[REQUEST_URL] = requestUrl;

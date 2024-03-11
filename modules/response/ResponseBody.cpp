@@ -4,6 +4,10 @@ ResponseBody::ResponseBody() {}
 
 ResponseBody::ResponseBody(const StatusCode& statusCode) {
 	this->statusCode = statusCode;
+	this->contentType = "";
+	this->contentLength = 0;
+	this->location = "";
+	this->body = "";
 }
 
 ResponseBody::~ResponseBody() {}
@@ -17,6 +21,10 @@ const string& ResponseBody::getContentType() const {
 
 const size_t& ResponseBody::getContentLength() const {
 	return contentLength;
+}
+
+const string& ResponseBody::getLocation() const {
+	return location;
 }
 
 const string& ResponseBody::getBody() const {

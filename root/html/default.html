@@ -12,40 +12,33 @@ function sendRequest() {
     xhr.open(method, url, true);
 
     xhr.responseType = 'blob';
-
     xhr.onload = function () {
-        if (xhr.status === 200) {
-            var contentType = xhr.getResponseHeader('Content-Type');
-
-            if (contentType.includes('text/html')) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    responseContainer.innerHTML = e.target.result;
-                }
-                reader.readAsText(xhr.response);
-            } else if (contentType.includes('text/plain')) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    responseContainer.innerText = e.target.result;
-                }
-                reader.readAsText(xhr.response);
-            } else if (contentType.includes('image/png')) {
-                var img = new Image();
-                var url = URL.createObjectURL(xhr.response);
-                img.onload = function() {
-                    responseContainer.innerHTML = '';
-					responseContainer.style.display = 'flex';
-                    responseContainer.appendChild(img);
-                    URL.revokeObjectURL(url);
-                }
-                img.src = url;
-            } else {
-                responseContainer.innerText = '지원하지 않는 파일 형식입니다.';
-            }
-        } else {
-            var port = url.match(/:(\d+)/)[1];
-            window.location.href = "http://example.com:" + port + "/error.html"
-        }
+		var contentType = xhr.getResponseHeader('Content-Type');
+		if (contentType.includes('text/html')) {
+			var reader = new FileReader();
+			reader.onload = function(e) {
+				responseContainer.innerHTML = e.target.result;
+			}
+			reader.readAsText(xhr.response);
+		} else if (contentType.includes('text/plain')) {
+			var reader = new FileReader();
+			reader.onload = function(e) {
+				responseContainer.innerText = e.target.result;
+			}
+			reader.readAsText(xhr.response);
+		} else if (contentType.includes('image/png')) {
+			var img = new Image();
+			var url = URL.createObjectURL(xhr.response);
+			img.onload = function() {
+				responseContainer.innerHTML = '';
+				responseContainer.style.display = 'flex';
+				responseContainer.appendChild(img);
+				URL.revokeObjectURL(url);
+			}
+			img.src = url;
+		} else {
+			responseContainer.innerText = '지원하지 않는 파일 형식입니다.';
+		}
     };
 
     xhr.onerror = function () {
