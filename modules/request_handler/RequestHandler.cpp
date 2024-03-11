@@ -13,8 +13,9 @@ RequestHandler::RequestHandler(const Request* request, Client* client) {
 	this->bodyMaxSize = 0;
 	this->buf = NULL;
 	this->config = &client->getServer().getServerConfig();
+	this->isUrlIndex = request->getIsUrlIndex();
 	if (request->getStatus() != ERROR) {
-		this->bodyMaxSize =  client->getServer().getServerConfig().getClientMaxBodySize();
+		this->bodyMaxSize =  config->getClientMaxBodySize();
 		this->buf = new char[bodyMaxSize];
 		this->method = request->getProperties().find(METHOD)->second;
 		this->requestUrl = request->getProperties().find(REQUEST_URL)->second;//서버 루트 url + requestUrl 해주어야함
@@ -57,21 +58,23 @@ ResponseBody* RequestHandler::handleRequest() {
 }
 
 void RequestHandler::handleGet() {
-	bool autoIndex = client->getServer().getServerConfig().getAutoindexOn();
-	if (autoIndex && isUrlDir) {
+	bool autoIndex = config->getAutoindexOn();
+	if (autoIndex && isUrlDir && !isUrlIndex) {
 		string resource = HTTPInfo::defaultRoot + requestUrl;
 		dirListing(resource, requestUrl);
-	} else if (!autoIndex && isUrlDir) {
+	} else if (!autoIndex && isUrlDir && !isUrlIndex) {
 		throw StatusCode(400, BAD_REQUEST);
 	} else {
 		size_t idx = requestUrl.rfind('.');
 		string contentType = idx != SIZE_T_MAX ? string(requestUrl.begin() + idx + 1, requestUrl.end()) : "";
-		
-		int fd = open((HTTPInfo::root + requestUrl).c_str(), O_RDONLY);
-		int n = read(fd, buf, bodyMaxSize);
-		if (n < 0) {// max size 보다 클때도 추가
-			handleError(StatusCode(500, INTERVER_SERVER_ERROR));
-			return ;
+		cout << HTTPInfo::defaultRoot + requestUrl << "\n";////////////////////////////////
+		int fd = open((HTTPInfo::defaultRoot + requestUrl).c_str(), O_RDONLY);
+		int n = read(fd, buf, sizeof(buf));
+		if (n < 0 ) {// max size 보다 클때도 추가
+			throw StatusCode(500, INTERVER_SERVER_ERROR);
+		}
+		if (read(fd, buf, sizeof(buf))) {
+			throw StatusCode(400, BAD_REQUEST);
 		}
 		responseBody->setStatusCode(StatusCode(200, OK));
 		responseBody->setContentType(HTTPInfo::convertToMIME(contentType));
@@ -88,12 +91,13 @@ void RequestHandler::dirListing(const string& resource, string& uri) {
 	if (uri.back() != '/') uri.push_back('/');
 	autoIndexing += "<table>";
 	struct dirent* entry;
-	string absoluteUri = "http://localhost:" + Utils::intToString(client->getServer().getServerConfig().getPort()) + "/" + resource.substr(HTTPInfo::defaultRoot.size()) + "/";
+	string absoluteUri = "http://localhost:" + Utils::intToString(config->getPort()) + resource.substr(HTTPInfo::defaultRoot.size() + config->getRoot().size()) + "/";
 	DIR* dp = opendir(resource.c_str());
 	if (dp != NULL) {
 		while ((entry = readdir(dp))) {
 			string entryName = entry->d_name;
 			if (entryName.front() == '.') continue;
+			cout << absoluteUri + entryName << "\n";//////////////////////////////////////////
 			autoIndexing += "<tr><td><a href='" + absoluteUri + entryName + "'>" + entryName + "</a></td></tr>";
 		}
 	}
@@ -182,26 +186,25 @@ void RequestHandler::handleCgiRead() {
 void RequestHandler::handleError(const StatusCode& statusCode) {
 	responseBody->setStatusCode(statusCode);
 	responseBody->setContentType(TEXT_HTML);
-	string fileName = HTTPInfo::defaultRoot + "html/" + "error" + ".html";// config 에서 받아 써야함
+	string fileName = HTTPInfo::defaultRoot + "/root/html/" + config->getDefaultErrorPage();// config 에서 받아 써야함
 	int fd = open(fileName.c_str(), O_RDONLY);
-	if (fd < 0) {
-		Utils::exitWithErrmsg(INTERVER_SERVER_ERROR);
-	}
-	int n = read(fd, buf, bodyMaxSize);
+	char errorBuf[2048];
+	int n = read(fd, errorBuf, sizeof(errorBuf));
 	if (n < 0) {
 		Utils::exitWithErrmsg(INTERVER_SERVER_ERROR);
 	}
 	responseBody->setContentLength(n);
-	responseBody->setBody(buf, n);
+	responseBody->setBody(errorBuf, n);
 }
 
 void RequestHandler::checkResource() {
 	struct stat buffer;
-	if (stat((HTTPInfo::root + requestUrl).c_str(), &buffer) != 0) {
+	if (stat((HTTPInfo::defaultRoot + requestUrl).c_str(), &buffer) != 0) {
 		throw StatusCode(404, string(NOT_FOUND) + ": " + requestUrl);
 	}
 	// 디렉토리 리스팅 해야함.....
 	isUrlDir = S_ISDIR(buffer.st_mode);
+
 	if (method == POST && !isUrlDir) {
 		throw StatusCode(400, BAD_REQUEST);
 	}

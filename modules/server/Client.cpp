@@ -34,7 +34,7 @@ Request* Client::getRequest() {
 
 Response* Client::getResponse() { return (response);}
 
-const int& Client::getSocketFd() { return (clientSocket);}
+const int& Client::getSocketFd() const { return (clientSocket);}
 
 const int& Client::getPipeFd() { return (pipeFd);}
 

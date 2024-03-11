@@ -17,17 +17,18 @@ class Config {
 	private:
 		EConfigType	type;
 		map<string, Config>	locations;
-
+		/*서버에만 있음*/
 		int		port;//default 8080 unsigned short range 벗어나면 에러
 		string	serverName;//default webserv.com
-		size_t	clientMaxBodySize;//default 1000000, int range벗어나면 에러
 		string	root;//default /
-		string	index;//default 빈 문자열 에러처리 구현???
-		bool	autoindexOn;//default off
-		/* locations 에만 적용, 서버에는 비어있음 */
-		string			returnRedir;//default location
+		/*서버, 로케이션 둘 다 있을 수 있음*/
+		string	index;//default 빈 문자열
+		size_t	clientMaxBodySize;//default 1000000, int range벗어나면 에러
+		string	defaultErrorPage;//default 빈 문자열
 		vector<string>	allowMethods;//default 비어있음
-		string			alias;//default 비어있음 꼭 써야할까???
+		bool	autoindexOn;//default on
+		/* locations 에만 적용, 서버에는 비어있음 */
+		string	alias;//default 빈 문자열
 
 		bool	isWrongClientMaxBodySize(const string& CMBS_String) const;
 		bool	isWrongPort(const string& portString) const;
@@ -41,15 +42,23 @@ class Config {
 		
 		/* Getter */
 		const EConfigType	getType() const;
-		map<string, Config>	getLocations();
 		const int&	getPort() const;
 		string	getServerName();
+		const string&	getRoot() const;
+		/* location 에 있을 수 있는 지시어들.
+		loc없는건 서버 config에서 가져옴
+		loc있는건 location config에 있으면 가져오고 없으면 서버config에서 가져옴*/
 		const size_t& getClientMaxBodySize() const;
-		string	getRoot();
-		string	getIndex();
+		const size_t& getClientMaxBodySize(string loc) const;
+		const string&	getDefaultErrorPage() const;
+		const string&	getDefaultErrorPage(string loc) const;
+		const string	getIndex() const;
+		const string	getIndex(string loc) const;
 		const bool&	getAutoindexOn() const;
-		string	getReturnRedir();
+		const bool&	getAutoindexOn(string loc) const;
 		const vector<string>&	getAllowMethods() const;
+		const vector<string>&	getAllowMethods(string loc) const;
+
 		void	printAllInfo() const;
 };
 

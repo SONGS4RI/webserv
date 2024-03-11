@@ -5,11 +5,11 @@
 
 char currentPath[FILENAME_MAX];
 
-string HTTPInfo::root = string(getcwd(currentPath, sizeof(currentPath))) + "/../root/" /* + config root*/;
-string HTTPInfo::defaultRoot = string(getcwd(currentPath, sizeof(currentPath))) + "/../root/";
+string HTTPInfo::defaultRoot = string(getcwd(currentPath, sizeof(currentPath)));
 
 void HTTPInfo::isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion, const Config* serverConfig) {
-	vector<string> methods = serverConfig->getAllowMethods();
+	const vector<string>& methods = serverConfig->getAllowMethods(requestUrl);
+
 	if (find(methods.begin(), methods.end(), method) == methods.end()) {
 		throw StatusCode(400, string(BAD_REQUEST) + ": Not Allowed Method");
 	}

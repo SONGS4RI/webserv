@@ -7,6 +7,7 @@
 #include "../utils/Utils.hpp"
 #include "../utils/StatusCode.hpp"
 #include "../server/SocketManager.hpp"
+#include "../parseConfig/Config.hpp"
 
 using namespace std;
 
@@ -20,6 +21,7 @@ Request::Request(const Client* client) {
 	this->statusCode = StatusCode();
 	this->readbuf.clear();
 	this->client = client;
+	this->isUrlIndex = false;
 }
 
 Request::~Request() {
@@ -60,11 +62,13 @@ void Request::parseStartLine() {
 		buf[method.size() + 1 + requestUrl.size()] != ' ') {
 		throw StatusCode(400, "잘못된 형식");
 	}
-	requestUrl = requestUrl == "/" ? "html/default.html" : requestUrl;// 루트 페이지
-	size_t lidx = requestUrl.front() == '/';
-	requestUrl = string(requestUrl.begin() + lidx, requestUrl.end());
-
+	const Config& serverConfig = client->getServer().getServerConfig();
+	string index = requestUrl == "/" ? serverConfig.getIndex() : serverConfig.getIndex(requestUrl);// 루트 페이지
+	if (index != "") {
+		isUrlIndex = true;
+	}
 	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion, &client->getServer().getServerConfig());
+	requestUrl = serverConfig.getRoot() + (isUrlIndex ? index : requestUrl);
 	properties[METHOD] = method;
 	properties[REQUEST_URL] = requestUrl;
 	status = HEADER;
@@ -188,8 +192,8 @@ void Request::parseBody() {
 	}
 }
 
-void Request::parseRequest(Client& client) {
-	int n = read(client.getSocketFd(), buf, BUF_SIZE);
+void Request::parseRequest() {
+	int n = read(client->getSocketFd(), buf, BUF_SIZE);
 	if (n < 0) {
 		// 무언가 처리
 		return ;
@@ -215,7 +219,9 @@ void Request::parseRequest(Client& client) {
 				if (properties[TRANSFER_ENCODING] != CHUNKED && readenContentLength != body->getContentLength()) {// contentLength 있는 경우 없는경우 체크
 					throw StatusCode(400, "content-length 불일치");
 				}
-				// Response 만들기전 요청 처리
+				if (readenContentLength > client->getServer().getServerConfig().getClientMaxBodySize()) {
+					throw StatusCode(400, "Max Body Size 초과");
+				}
 				break ;
 			}
 		}
@@ -232,3 +238,5 @@ const map<string, string>& Request::getProperties() const { return (properties);
 RequestBody* Request::getBody() const { return (body);}
 
 const StatusCode& Request::getStatusCode() const { return (statusCode);}
+
+const bool& Request::getIsUrlIndex() const { return (isUrlIndex);};

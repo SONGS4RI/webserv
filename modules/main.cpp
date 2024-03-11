@@ -17,6 +17,10 @@ int main(int argc, char** argv) {
 	try {
 		ParseConfig	parsedConfigFile(argv[1]);
 		sm->init(parsedConfigFile.getServerConfigs());
+		vector<Config>::iterator it = parsedConfigFile.getServerConfigs().begin();
+		for (; it != parsedConfigFile.getServerConfigs().end(); it++) {
+			it->printAllInfo();
+		}
 	} catch(const char* errstr) {
 		Utils::exitWithErrmsg(errstr);
 	}
@@ -31,7 +35,6 @@ int main(int argc, char** argv) {
 			em->handleEvent(i);
 		}
 	}
-
 	delete sm;
 	delete em;
 }

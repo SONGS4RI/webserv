@@ -32,7 +32,7 @@ class Client {
 		const Server&	getServer() const;
 		Request* getRequest();
 		Response* getResponse();
-		const int& getSocketFd();
+		const int& getSocketFd() const;
 		const int& getPipeFd();
 		const int& getPid();
 };

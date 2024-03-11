@@ -4,11 +4,14 @@ Config::Config() {};
 
 Config::Config(Block& globalBlock, Block& serverBlock) {
 	type = SERVER_CONFIG;
-	clientMaxBodySize = 1000000;
-	root = "/";
+	port = 8080;
+	serverName = "webserv.com";
+	root = "/root";
 	index = "";
-	autoindexOn = false;
-
+	clientMaxBodySize = 1000000;
+	defaultErrorPage = "error.html";
+	autoindexOn = true;
+	alias = "";
 	try
 	{
 		setByBlock(globalBlock);//global block
@@ -27,10 +30,11 @@ Config::Config(Config& serverConfig, Block& locationBlock) {
 	type = LOCATION_CONFIG;
 	port = serverConfig.getPort();
 	serverName = serverConfig.getServerName();
-	clientMaxBodySize = serverConfig.getClientMaxBodySize();
 	root = serverConfig.getRoot();
 	index = serverConfig.getIndex();
+	clientMaxBodySize = serverConfig.getClientMaxBodySize();
 	allowMethods = serverConfig.getAllowMethods();
+	defaultErrorPage = serverConfig.getDefaultErrorPage();
 	autoindexOn = serverConfig.getAutoindexOn();
 	setByBlock(locationBlock);
 }
@@ -39,28 +43,17 @@ void	Config::setByBlock(Block& block) {
 	map<string, vector<string> >::const_iterator	it;
 
 	/* 모든 블록에 있을 수 있는 지시어 */
+	if ((it = block.directives.find("error_page")) != block.directives.end()) {
+		defaultErrorPage = it->second[0];
+	}
 	if ((it = block.directives.find("client_max_body_size")) != block.directives.end()) {
 		if (isWrongClientMaxBodySize(it->second[0])) {
 			throw "Error: client_max_body_size is wrong in configfile";
 		}
 		clientMaxBodySize = atoi(it->second[0].c_str());
 	}
-	if ((it = block.directives.find("root")) != block.directives.end()) {
-		if (isWrongPath(it->second[0]) == true) {
-			cout << it->second[0] << endl;
-			throw "Error: root Path is wrong in configfile";
-		}
-		root = it->second[0];
-	}
 	if ((it = block.directives.find("index")) != block.directives.end()) {
 		index = it->second[0];
-	}
-	if ((it = block.directives.find("autoindex")) != block.directives.end()) {
-		if (it->second[0] == "on") {
-			autoindexOn = true;
-		} else {
-			autoindexOn = false;
-		}
 	}
 	if ((it = block.directives.find("allow_methods")) != block.directives.end()) {
 		vector<string>	allowMethodsBlock = it->second;
@@ -73,29 +66,32 @@ void	Config::setByBlock(Block& block) {
 			}
 		}
 	}
+	if ((it = block.directives.find("root")) != block.directives.end()) {
+		if (isWrongPath(it->second[0]) == true) {
+			cout << it->second[0] << endl;
+			throw "Error: root Path is wrong in configfile";
+		}
+		root = "/root" + (it->second[0] == "/" ? "" : it->second[0]);
+		if (root.back() == '/') {
+			throw "Error: root Path is wrong in configfile";
+		}
+	}
 	if (block.type == "server") {//서버블록에만 있는 지시어
+		if ((it = block.directives.find("autoindex")) != block.directives.end()) {
+			if (it->second[0] == "off") {
+				autoindexOn = false;
+			}
+		}
 		if ((it = block.directives.find("listen")) != block.directives.end()) {
 			if (isWrongPort(it->second[0]) == true) {
 				throw "Error: wrong port in configfile";
 			}
 			port = atoi(it->second[0].c_str());
-		} else {
-			port = 8080;
 		}
 		if ((it = block.directives.find("server_name")) != block.directives.end()) {
 			serverName = it->second[0];
-		} else {
-			serverName = "webserv.com";
 		}
 	} else if (block.type == "location") {//로케이션블록에만 있는 지시어
-		if ((it = block.directives.find("return")) != block.directives.end()) {
-			if (isWrongPath(it->second[0]) == true) {
-				throw "Error: return Path is wrong in configfile";
-			}
-			returnRedir = it->second[0];
-		} else {
-			returnRedir = block.getLocation();
-		}
 		if ((it = block.directives.find("alias")) != block.directives.end()) {
 			if (isWrongPath(it->second[0]) == true) {
 				throw "Error: alias Path is wrong in configfile";
@@ -107,23 +103,56 @@ void	Config::setByBlock(Block& block) {
 
 const EConfigType	Config::getType() const { return (type);}
 
-map<string, Config>	Config::getLocations() { return (locations);}
-
 const int&	Config::getPort() const { return (port);}
+
+const string&	Config::getRoot() const { return (root);}
 
 string	Config::getServerName() { return (serverName);}
 
 const size_t& Config::getClientMaxBodySize() const { return (clientMaxBodySize);}
+const size_t& Config::getClientMaxBodySize(string loc) const {
+	map<string, Config>::const_iterator it = locations.find(loc);
+	if (it != locations.end()) {
+		return (it->second.getClientMaxBodySize());
+	}
+	return (clientMaxBodySize);
+}
 
-string	Config::getRoot() { return (root);}
+const string&	Config::getDefaultErrorPage() const { return (defaultErrorPage);}
+const string&	Config::getDefaultErrorPage(string loc) const {
+	map<string, Config>::const_iterator it = locations.find(loc);
+	if (it != locations.end()) {
+		return (it->second.getDefaultErrorPage());
+	}
+	return (defaultErrorPage);
+}
 
-string	Config::getIndex() { return (index);}
+const string	Config::getIndex() const { return (index);}
+const string	Config::getIndex(string loc) const {
+	map<string, Config>::const_iterator it = locations.find(loc);
+	if (it != locations.end()) {
+		return (it->second.getIndex());
+	}
+	return ("");
+}
 
 const bool&	Config::getAutoindexOn() const { return (autoindexOn);}
-
-string	Config::getReturnRedir() { return (returnRedir);}
+const bool&	Config::getAutoindexOn(string loc) const {
+	map<string, Config>::const_iterator it = locations.find(loc);
+	if (it != locations.end()) {
+		return (it->second.getAutoindexOn());
+	}
+	return (autoindexOn);
+}
 
 const vector<string>&	Config::getAllowMethods() const { return (allowMethods);}
+const vector<string>&	Config::getAllowMethods(string loc) const {
+	map<string, Config>::const_iterator it = locations.find(loc);
+	if (it != locations.end()) {
+		return (it->second.getAllowMethods());
+	}
+	return (allowMethods);
+}
 
 //Config 내용 프린트 해보는 함수
 void	Config::printAllInfo() const {
@@ -132,8 +161,9 @@ void	Config::printAllInfo() const {
 		cout << "type: SERVER_CONFIG" << endl;
 		cout << "port: " << port << endl;
 		cout << "serverName: " << serverName << endl;
-		cout << "clientMaxBodySize: " << clientMaxBodySize << endl;
 		cout << "root: " << root << endl;
+		cout << "clientMaxBodySize: " << clientMaxBodySize << endl;
+		cout << "defaultErrorPage: " << defaultErrorPage << endl;
 		cout << "index: " << index << endl;
 		cout << "autoindex: " << autoindexOn << endl;
 		cout << "allowMethods: ";
@@ -149,8 +179,9 @@ void	Config::printAllInfo() const {
 		cout << "\ttype: LOCATION_CONFIG" << endl;
 		cout << "\tport: " << port << endl;
 		cout << "\tserverName: " << serverName << endl;
-		cout << "\tclientMaxBodySize: " << clientMaxBodySize << endl;
 		cout << "\troot: " << root << endl;
+		cout << "\tclientMaxBodySize: " << clientMaxBodySize << endl;
+		cout << "\tdefaultErrorPage: " << defaultErrorPage << endl;
 		cout << "\tindex: " << index << endl;
 		cout << "\tautoindex: " << autoindexOn << endl;
 		cout << "\tallowMethods: ";
@@ -158,7 +189,6 @@ void	Config::printAllInfo() const {
 			cout << this->allowMethods[i] << ' ';
 		}
 		cout << endl;
-		cout << "\treturn: " << this->returnRedir << endl;
 		cout << "\talias: " << this->alias << endl;
 	}
 }

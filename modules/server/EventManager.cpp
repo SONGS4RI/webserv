@@ -50,6 +50,7 @@ void EventManager::changeEvent(uintptr_t ident, int16_t filter, uint16_t flags, 
 }
 
 void EventManager::handleEvent(const int& eventIdx) {
+	Utils::log("==================================================================================", CYAN);
 	struct kevent* curEvent = &event_list[eventIdx];
 	Utils::log(Utils::intToString(curEvent->ident) + "번 Event 처리중...", GREEN);
 	SocketManager* sm = SocketManager::getInstance();
@@ -87,7 +88,7 @@ void EventManager::handleEvent(const int& eventIdx) {
 			// 클라이언트의 처리 상태에 따라 이벤트 처리
 			Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Parsing", GREEN);
 			Request* request = client->getRequest();// NULL 이면 할당해서 주기
-			request->parseRequest(*client);
+			request->parseRequest();
 			if (request->getStatus() == PARSE_DONE || request->getStatusCode().getStatusCode() >= 400) {
 				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": " +
 				(request->getStatus() == PARSE_DONE ? "Parse Done" : "Parse Error: " + request->getStatusCode().getMessage()), GREEN);
