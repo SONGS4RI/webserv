@@ -38,6 +38,9 @@ bool Request::getLineAndCheckCRLF(const char& deli) {///////////////////////////
 
 bool Request::checkCRLF() {
 	int readCnt = readbuf.gcount();
+	if (readCnt == 0) {
+		throw StatusCode(400, string(BAD_REQUEST) + ": readCnt: 0");
+	}
 	bool isValid = (readCnt > 1 && buf[readCnt - 2] == '\r' && buf[readCnt - 1] == '\0');// \n 은 readline 으로 걸러짐
 	if (isValid) {
 		buf[readCnt - 2] = '\0';
@@ -45,10 +48,9 @@ bool Request::checkCRLF() {
 	}
 	if (readbuf.eof()) {// crlf 로 안 끝났는데, 끝까지 읽은 경우
 		leftOverBuffer = string(buf, readbuf.gcount());
-	} else {
-		throw StatusCode(500, INTERVER_SERVER_ERROR);
-	}
-	return false;
+		return false;
+	} 
+	throw StatusCode(500, INTERVER_SERVER_ERROR);
 }
 
 void Request::parseStartLine() {
@@ -200,7 +202,7 @@ void Request::parseBody() {
 void Request::parseRequest() {
 	int n = read(client->getSocketFd(), buf, BUF_SIZE);
 	if (n < 0) {
-		// 무언가 처리
+		Utils::log("Client Read Error", RED);
 		return ;
 	}
 	string curParsing(leftOverBuffer);
