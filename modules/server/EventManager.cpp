@@ -101,7 +101,7 @@ void EventManager::handleEvent(const int& eventIdx) {
 		if (client->getResponse() == NULL) {// udata -> Request
 			Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Handle Request Start", GREEN);
 			Request* request = (Request *)curEvent->udata;
-			RequestHandler requestHandler = RequestHandler(request, client);
+			RequestHandler requestHandler = RequestHandler(request, client);// 새로 생성하는 거 수정 가능할 지도
 			ResponseBody* responseBody = requestHandler.handleRequest();
 			if (responseBody != NULL) {// cgi 아니라면
 				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Response Created: " +

@@ -35,9 +35,13 @@ ResponseBody* RequestHandler::handleRequest() {
 			throw responseBody->getStatusCode();
 		}
 		int status;
-		if (client->getPid() > 0 && waitpid(client->getPid(), &status, WNOHANG) > 0) {
-			handleCgiRead();
-			return responseBody;
+		if (client->getPid() > 0) {
+			if (waitpid(client->getPid(), &status, WNOHANG) > 0) {
+				handleCgiRead();
+				return responseBody;
+			}
+			cout << client->getPid() << ": waiting\n";////////////////////////////////////
+			return NULL;
 		}
 		checkResource();
 		if (method == GET) {
@@ -52,6 +56,7 @@ ResponseBody* RequestHandler::handleRequest() {
 		}
 	} catch(const StatusCode& statusCode) {
 		// Handle error
+		cout << statusCode.getMessage() << "\n";
 		handleError(statusCode);
 	}
 	return responseBody;
@@ -152,9 +157,14 @@ void RequestHandler::handleCgiExecve() {
         close(pipefd[0]);
         dup2(pipefd[1], STDOUT_FILENO);
 
-        char **argv = NULL;// = {"/usr/bin/python", "script.py", NULL};
+        // const char **argv;// = {"/usr/bin/python", "script.py", NULL};
+		const char** argv = new const char*[3];
         char **envp = NULL;// = {NULL};
-        execve(argv[0], argv, envp);
+		argv[0] = "/usr/bin/python3";
+		argv[1] = (HTTPInfo::defaultRoot + "/modules/cgi/main.py").c_str();
+		argv[2] = NULL;
+		char *const *argv_casted = const_cast<char *const *>(argv);
+        execve(argv[0], argv_casted, envp);
 		exit(EXIT_FAILURE);
     } else { // 부모 프로세스
         close(pipefd[1]);
@@ -168,8 +178,10 @@ void RequestHandler::handleCgiRead() {
 	close(client->getPipeFd());
 	string location(buf);
 	if (location == "ERROR") {
-		throw StatusCode(500, INTERVER_SERVER_ERROR);
+		throw StatusCode(500, "error");
+		throw StatusCode(500, "INTERVER_SERVER_ERROR");
 	} else {
+		throw StatusCode(400, "good");
 		responseBody->setStatusCode(StatusCode(201, CREATED));
 		responseBody->setLocation(location);
 	}
