@@ -111,8 +111,8 @@ void RequestHandler::dirListing(const string& resource, string& uri) {
 }
 
 void RequestHandler::handleDelete() {
-	if (remove(requestUrl.c_str()) != 0) {
-		throw StatusCode(405, FORBIDDEN);
+	if (remove((HTTPInfo::defaultRoot + requestUrl).c_str()) != 0) {
+		throw StatusCode(500, INTERVER_SERVER_ERROR);
 	}
 	responseBody->setStatusCode(StatusCode(204, NO_CONTENT));
 }

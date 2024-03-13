@@ -8,11 +8,21 @@ char currentPath[FILENAME_MAX];
 string HTTPInfo::defaultRoot = string(getcwd(currentPath, sizeof(currentPath)));
 
 void HTTPInfo::isValidStartLine(const string& method, const string& requestUrl, const string& httpVersion, const Config* serverConfig) {
-	const vector<string>& methods = serverConfig->getAllowMethods(requestUrl);
-
-	if (find(methods.begin(), methods.end(), method) == methods.end()) {
+	size_t lidx = requestUrl.size();
+	bool flag = false;
+	while (lidx != SIZE_T_MAX) {
+		string targetUrl = requestUrl.substr(0, lidx);
+		const vector<string>& methods = serverConfig->getAllowMethods(targetUrl);
+		if (find(methods.begin(), methods.end(), method) != methods.end()) {
+			flag = true;
+			break;
+		}
+		lidx = targetUrl.rfind('/');
+	}
+	if (!flag) {
 		throw StatusCode(400, string(BAD_REQUEST) + ": Not Allowed Method");
 	}
+
 	if (httpVersion != HTTP_VERSION || requestUrl == "") {
 		throw StatusCode(400, string(BAD_REQUEST) + ": invalid format");
 	}

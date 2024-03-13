@@ -33,7 +33,7 @@ Config::Config(Config& serverConfig, Block* locationBlock) {
 	port = serverConfig.getPort();
 	serverName = serverConfig.getServerName();
 	root = serverConfig.getRoot();
-	index = serverConfig.getIndex();
+	index = locationBlock != NULL ? "" : serverConfig.getIndex();
 	clientMaxBodySize = serverConfig.getClientMaxBodySize();
 	allowMethods = serverConfig.getAllowMethods();
 	defaultErrorPage = serverConfig.getDefaultErrorPage();
