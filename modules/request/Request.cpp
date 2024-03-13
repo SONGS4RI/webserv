@@ -63,12 +63,17 @@ void Request::parseStartLine() {
 		throw StatusCode(400, "잘못된 형식");
 	}
 	const Config& serverConfig = client->getServer().getServerConfig();
-	string index = requestUrl == "/" ? serverConfig.getIndex() : serverConfig.getIndex(requestUrl);// 루트 페이지
+	// string index = requestUrl == "/" ? serverConfig.getIndex() : serverConfig.getIndex(requestUrl);// 루트 페이지
+	string index = serverConfig.getIndex(requestUrl);// 루트 페이지
 	if (index != "") {
 		isUrlIndex = true;
 	}
 	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion, &client->getServer().getServerConfig());
-	requestUrl = serverConfig.getRoot() + (isUrlIndex ? index : requestUrl);
+	if (requestUrl == "/favicon.ico") {
+		requestUrl = "/root/favicon.ico";
+	} else {
+		requestUrl = serverConfig.getRoot() + (isUrlIndex ? index : requestUrl);
+	}
 	properties[METHOD] = method;
 	properties[REQUEST_URL] = requestUrl;
 	status = HEADER;
