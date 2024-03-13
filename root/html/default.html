@@ -9,43 +9,84 @@ function sendRequest() {
     var url = document.getElementById("url-input").value;
     var method = document.getElementById('method-select').value;
     var responseContainer = document.getElementById("response-container");
-    xhr.open(method, url, true);
+    const fileInput = document.getElementById('fileInput');
+    const file = fileInput.files[0]; // 선택된 파일 가져오기
+    const contentType = document.querySelector('input[name="contentType"]:checked').value; // 전송 방식 선택
+    if (method == 'POST') {
+        if (!file) {
+            alert('파일을 선택해주세요.');
+            return;
+        }
 
-    xhr.responseType = 'blob';
-    xhr.onload = function () {
-		var contentType = xhr.getResponseHeader('Content-Type');
-		if (contentType.includes('text/html')) {
-			var reader = new FileReader();
-			reader.onload = function(e) {
-				responseContainer.innerHTML = e.target.result;
-			}
-			reader.readAsText(xhr.response);
-		} else if (contentType.includes('text/plain')) {
-			var reader = new FileReader();
-			reader.onload = function(e) {
-				responseContainer.innerText = e.target.result;
-			}
-			reader.readAsText(xhr.response);
-		} else if (contentType.includes('image/png')) {
-			var img = new Image();
-			var url = URL.createObjectURL(xhr.response);
-			img.onload = function() {
-				responseContainer.innerHTML = '';
-				responseContainer.style.display = 'flex';
-				responseContainer.appendChild(img);
-				URL.revokeObjectURL(url);
-			}
-			img.src = url;
-		} else {
-			responseContainer.innerText = '지원하지 않는 파일 형식입니다.';
-		}
-    };
+        // multipart/form-data 방식
+        if (contentType === 'multipart') {
+            const formData = new FormData();
+            formData.append('file', file);
 
-    xhr.onerror = function () {
-        responseContainer.innerText = '요청 중 에러가 발생했습니다.';
-    };
-	xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
-    xhr.send();
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+        }
+        // application/octet-stream 방식
+        else if (contentType === 'octet') {
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/octet-stream',
+                },
+                body: file,
+            })
+            .then(response => response.json())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+        }
+    } else {
+        if (file) {
+            alert('파일 업로드는 POST');
+            return;
+        }
+        xhr.open(method, url, true);
+
+        xhr.responseType = 'blob';
+        xhr.onload = function () {
+            var contentType = xhr.getResponseHeader('Content-Type');
+            if (contentType.includes('text/html')) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    responseContainer.innerHTML = e.target.result;
+                }
+                reader.readAsText(xhr.response);
+            } else if (contentType.includes('text/plain')) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    responseContainer.innerText = e.target.result;
+                }
+                reader.readAsText(xhr.response);
+            } else if (contentType.includes('image/png')) {
+                var img = new Image();
+                var url = URL.createObjectURL(xhr.response);
+                img.onload = function() {
+                    responseContainer.innerHTML = '';
+                    responseContainer.style.display = 'flex';
+                    responseContainer.appendChild(img);
+                    URL.revokeObjectURL(url);
+                }
+                img.src = url;
+            } else {
+                responseContainer.innerText = '지원하지 않는 파일 형식입니다.';
+            }
+        };
+
+        xhr.onerror = function () {
+            responseContainer.innerText = '요청 중 에러가 발생했습니다.';
+        };
+        xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
+        xhr.send();
+    }
 }
 </script>
 </head>
@@ -81,6 +122,12 @@ function sendRequest() {
     </select>
     <input type="text" id="url-input" value="http://localhost:">
     <button onclick="sendRequest()">Send Request</button>
+</div>
+
+<div class="centered-text">
+    <input type="file" id="fileInput">
+    <label><input type="radio" name="contentType" value="multipart" checked> multipart/form-data</label>
+    <label><input type="radio" name="contentType" value="octet"> application/octet-stream</label>
 </div>
 
 <div id="response-container"></div>
