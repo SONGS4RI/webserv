@@ -118,16 +118,7 @@ void RequestHandler::handleDelete() {
 }
 
 void RequestHandler::handlePost() {
-	string extension;
-	if (requestBody->getContentType() == APPLICATION_OCTET_STREAM) {
-		extension = ".bin";
-	} else if (requestBody->getContentType() == IMAGE_PNG) {
-		extension = ".png";
-	} else if (requestBody->getContentType() == TEXT_HTML) {
-		extension = ".html";
-	} else if (requestBody->getContentType() == TEXT_PLAIN) {
-		extension = ".txt";
-	}
+	string extension = ".bin";
 	time_t now = time(0);
 	srand(static_cast<unsigned int>(now));
 	tm* now_tm = localtime(&now);
@@ -137,15 +128,15 @@ void RequestHandler::handlePost() {
 	sprintf(time, "%04d%02d%02d_%02d%02d%02d",
                  1900 + now_tm->tm_year, now_tm->tm_mon + 1, now_tm->tm_mday,
                  now_tm->tm_hour, now_tm->tm_min, now_tm->tm_sec);
-	string fileName = string(time) + "_" + Utils::intToString(randomValue) + extension;
+	string fileName = "/" + string(time) + "_" + Utils::intToString(randomValue) + extension;
 
-    ofstream outFile(fileName.c_str(), std::ios::out | std::ios::binary);
+    ofstream outFile(HTTPInfo::defaultRoot + requestUrl + fileName.c_str(), std::ios::out | std::ios::binary);
 	if (!outFile) {
 		throw StatusCode(500, INTERVER_SERVER_ERROR);
 	}
 	outFile.write(requestBody->getBody().c_str(), requestBody->getBody().size());
 	outFile.close();
-	responseBody->setStatusCode(StatusCode(200, OK));
+	responseBody->setStatusCode(StatusCode(201, CREATED));
 	responseBody->setLocation(requestUrl + fileName);// 경로 설정
 }
 
