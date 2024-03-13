@@ -37,13 +37,13 @@ class Config {
 	public:
 		Config();
 		Config(Block& globalBlock, Block& serverBlock);
-		Config(Config& serverConfig, Block& locationBlock);
+		Config(Config& serverConfig, Block* locationBlock);
 		void	setByBlock(Block& Block_);
 		
 		/* Getter */
 		const EConfigType	getType() const;
 		const int&	getPort() const;
-		string	getServerName();
+		const string&	getServerName() const;
 		const string&	getRoot() const;
 		/* location 에 있을 수 있는 지시어들.
 		loc없는건 서버 config에서 가져옴

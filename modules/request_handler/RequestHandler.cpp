@@ -69,17 +69,18 @@ void RequestHandler::handleGet() {
 		string contentType = idx != SIZE_T_MAX ? string(requestUrl.begin() + idx + 1, requestUrl.end()) : "";
 		cout << HTTPInfo::defaultRoot + requestUrl << "\n";////////////////////////////////
 		int fd = open((HTTPInfo::defaultRoot + requestUrl).c_str(), O_RDONLY);
-		int n = read(fd, buf, sizeof(buf));
-		if (n < 0 ) {// max size 보다 클때도 추가
+		int n = read(fd, buf, bodyMaxSize);
+		if (n < 0) {// max size 보다 클때도 추가
+		
 			throw StatusCode(500, INTERVER_SERVER_ERROR);
-		}
-		if (read(fd, buf, sizeof(buf))) {
-			throw StatusCode(400, BAD_REQUEST);
 		}
 		responseBody->setStatusCode(StatusCode(200, OK));
 		responseBody->setContentType(HTTPInfo::convertToMIME(contentType));
 		responseBody->setContentLength(n);
 		responseBody->setBody(buf, n);
+		if (read(fd, buf, bodyMaxSize)) {
+			throw StatusCode(400, BAD_REQUEST);
+		}
 		close(fd);
 	}
 }
@@ -110,8 +111,8 @@ void RequestHandler::dirListing(const string& resource, string& uri) {
 }
 
 void RequestHandler::handleDelete() {
-	if (remove(requestUrl.c_str()) != 0) {
-		throw StatusCode(405, FORBIDDEN);
+	if (remove((HTTPInfo::defaultRoot + requestUrl).c_str()) != 0) {
+		throw StatusCode(500, INTERVER_SERVER_ERROR);
 	}
 	responseBody->setStatusCode(StatusCode(204, NO_CONTENT));
 }

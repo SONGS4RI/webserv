@@ -18,25 +18,29 @@ Config::Config(Block& globalBlock, Block& serverBlock) {
 		setByBlock(globalBlock.blocks[0]);//http block
 		setByBlock(serverBlock);//server block
 		/* 서버블록의 하위 location 블록들을 set 함. */
+		//Location의 "/" config를 반드시 하나 생성함.
+		locations["/"] = Config(*this, NULL);
 		for (size_t i = 0; i < serverBlock.blocks.size(); i++) {
-			locations[serverBlock.blocks[i].getLocation()] = Config(*this, serverBlock.blocks[i]);
+			locations[serverBlock.blocks[i].getLocation()] = Config(*this, &serverBlock.blocks[i]);
 		}
 	} catch(const char* errmsg) {
 		Utils::exitWithErrmsg(string(errmsg));
 	}
 }
 
-Config::Config(Config& serverConfig, Block& locationBlock) {
+Config::Config(Config& serverConfig, Block* locationBlock) {
 	type = LOCATION_CONFIG;
 	port = serverConfig.getPort();
 	serverName = serverConfig.getServerName();
 	root = serverConfig.getRoot();
-	index = serverConfig.getIndex();
+	index = locationBlock != NULL ? "" : serverConfig.getIndex();
 	clientMaxBodySize = serverConfig.getClientMaxBodySize();
 	allowMethods = serverConfig.getAllowMethods();
 	defaultErrorPage = serverConfig.getDefaultErrorPage();
 	autoindexOn = serverConfig.getAutoindexOn();
-	setByBlock(locationBlock);
+	if (locationBlock != NULL) {
+		setByBlock(*locationBlock);
+	}
 }
 
 void	Config::setByBlock(Block& block) {
@@ -107,7 +111,7 @@ const int&	Config::getPort() const { return (port);}
 
 const string&	Config::getRoot() const { return (root);}
 
-string	Config::getServerName() { return (serverName);}
+const string&	Config::getServerName() const { return (serverName);}
 
 const size_t& Config::getClientMaxBodySize() const { return (clientMaxBodySize);}
 const size_t& Config::getClientMaxBodySize(string loc) const {
@@ -171,6 +175,7 @@ void	Config::printAllInfo() const {
 			cout << this->allowMethods[i] << ' ';
 		}
 		cout << endl;
+		cout << "alias: " << this->alias << endl;
 		for (map<string, Config>::const_iterator it = locations.begin(); it != locations.end(); it++) {
 			it->second.printAllInfo();
 		}
