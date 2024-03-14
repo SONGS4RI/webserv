@@ -206,7 +206,7 @@ void RequestHandler::handleError(const StatusCode& statusCode) {
 	responseBody->setContentType(TEXT_HTML);
 	string fileName = HTTPInfo::defaultRoot + "/root/html/" + config->getDefaultErrorPage();// config 에서 받아 써야함
 	int fd = open(fileName.c_str(), O_RDONLY);
-	char errorBuf[2048];
+	char errorBuf[TMP_SIZE * 2];
 	int n = read(fd, errorBuf, sizeof(errorBuf));
 	if (n < 0) {
 		Utils::exitWithErrmsg(INTERVER_SERVER_ERROR);

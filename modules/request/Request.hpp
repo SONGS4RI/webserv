@@ -13,7 +13,7 @@
 #include "../utils/Enums.hpp"
 #include "../utils/StatusCode.hpp"
 
-#define TMP_SIZE 1024
+#define TMP_SIZE 4096
 
 class Client;
 
