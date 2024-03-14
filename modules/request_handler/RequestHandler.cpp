@@ -40,7 +40,6 @@ ResponseBody* RequestHandler::handleRequest() {
 				handleCgiRead();
 				return responseBody;
 			}
-			cout << client->getPid() << ": waiting\n";////////////////////////////////////
 			return NULL;
 		}
 		checkResource();
@@ -72,7 +71,6 @@ void RequestHandler::handleGet() {
 	} else {
 		size_t idx = requestUrl.rfind('.');
 		string contentType = idx != SIZE_T_MAX ? string(requestUrl.begin() + idx + 1, requestUrl.end()) : "";
-		cout << HTTPInfo::defaultRoot + requestUrl << "\n";////////////////////////////////
 		int fd = open((HTTPInfo::defaultRoot + requestUrl).c_str(), O_RDONLY);
 		int n = read(fd, buf, bodyMaxSize);
 		if (n < 0) {// max size 보다 클때도 추가
@@ -103,7 +101,6 @@ void RequestHandler::dirListing(const string& resource, string& uri) {
 		while ((entry = readdir(dp))) {
 			string entryName = entry->d_name;
 			if (entryName.front() == '.') continue;
-			cout << absoluteUri + entryName << "\n";//////////////////////////////////////////
 			autoIndexing += "<tr><td><a href='" + absoluteUri + entryName + "'>" + entryName + "</a></td></tr>";
 		}
 	}
@@ -146,45 +143,62 @@ void RequestHandler::handlePost() {
 }
 
 void RequestHandler::handleCgiExecve() {
-	int pipefd[2];
+	int ctop[2];
+	int ptoc[2];
     pid_t pid;
 
-    if (pipe(pipefd) == -1 || (pid = fork()) == -1) {
+    if (pipe(ctop) == -1 || pipe(ptoc) == -1 || (pid = fork()) == -1) {
         throw StatusCode(500, INTERVER_SERVER_ERROR);
     }
 
     if (pid == 0) { // 자식 프로세스
-        close(pipefd[0]);
-        dup2(pipefd[1], STDOUT_FILENO);
-
-        // const char **argv;// = {"/usr/bin/python", "script.py", NULL};
+        close(ctop[0]);
+		close(ptoc[1]);
+		dup2(ptoc[0], STDIN_FILENO);
+        dup2(ctop[1], STDOUT_FILENO);
+		close(ptoc[0]);
+		close(ctop[1]);
+		string	pythonPath = HTTPInfo::defaultRoot + "/modules/cgi/main.py";
+		string	savePath = "SAVE_PATH=" + HTTPInfo::defaultRoot + requestUrl;
+		string	boundary = "BOUNDARY=" + requestBody->getBoundary();
+		string	contentLength = "CONTENT_LENGTH=" + Utils::intToString(requestBody->getContentLength());
+		string	curPath = "CUR_PATH=" + HTTPInfo::defaultRoot + config->getRoot();
 		const char** argv = new const char*[3];
-        char **envp = NULL;// = {NULL};
 		argv[0] = "/usr/bin/python3";
-		argv[1] = (HTTPInfo::defaultRoot + "/modules/cgi/main.py").c_str();
+		argv[1] = pythonPath.c_str();
 		argv[2] = NULL;
-		char *const *argv_casted = const_cast<char *const *>(argv);
-        execve(argv[0], argv_casted, envp);
+
+		const char **envp = new const char*[5];
+		envp[0] = savePath.c_str();
+		envp[1] = boundary.c_str();
+		envp[2] = contentLength.c_str();
+		envp[3] = curPath.c_str();
+		envp[4] = NULL;
+
+        execve(argv[0], const_cast<char *const *>(argv), const_cast<char *const *>(envp));
 		exit(EXIT_FAILURE);
     } else { // 부모 프로세스
-        close(pipefd[1]);
-		client->setPipeFd(pipefd[0]);
+        close(ctop[1]);
+		close(ptoc[0]);
+		write(ptoc[1], requestBody->getBody().c_str(), requestBody->getBody().size());
+		close(ptoc[1]);
+		client->setPipeFd(ctop[0]);
 		client->setPid(pid);
     }
 }
 
 void RequestHandler::handleCgiRead() {
-	read(client->getPipeFd(), buf, bodyMaxSize);
+	char cgiBuf[BUF_SIZE + 1];
+	int n = read(client->getPipeFd(), cgiBuf, BUF_SIZE);
+	cgiBuf[n] = '\0';
 	close(client->getPipeFd());
-	string location(buf);
-	if (location == "ERROR") {
-		throw StatusCode(500, "error");
-		throw StatusCode(500, "INTERVER_SERVER_ERROR");
-	} else {
-		throw StatusCode(400, "good");
-		responseBody->setStatusCode(StatusCode(201, CREATED));
-		responseBody->setLocation(location);
+	string location(cgiBuf);
+	cout << location << "\n";
+	if (location == "ERROR\n") {
+		throw StatusCode(500, INTERVER_SERVER_ERROR);
 	}
+	responseBody->setStatusCode(StatusCode(201, CREATED));
+	responseBody->setLocation(location);
 }
 
 void RequestHandler::handleError(const StatusCode& statusCode) {
@@ -192,7 +206,7 @@ void RequestHandler::handleError(const StatusCode& statusCode) {
 	responseBody->setContentType(TEXT_HTML);
 	string fileName = HTTPInfo::defaultRoot + "/root/html/" + config->getDefaultErrorPage();// config 에서 받아 써야함
 	int fd = open(fileName.c_str(), O_RDONLY);
-	char errorBuf[2048];
+	char errorBuf[TMP_SIZE * 2];
 	int n = read(fd, errorBuf, sizeof(errorBuf));
 	if (n < 0) {
 		Utils::exitWithErrmsg(INTERVER_SERVER_ERROR);

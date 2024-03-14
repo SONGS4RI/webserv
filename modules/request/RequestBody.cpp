@@ -2,11 +2,12 @@
 
 RequestBody::RequestBody() {}
 
-void RequestBody::init(const string& contentType, const size_t& contentLength) {
+void RequestBody::init(const string& contentType, const size_t& contentLength, const string& boundary) {
 	this->contentType = contentType;
 	this->contentLength = contentLength;
 	this->chunkedStatus = LENGTH;
 	this->body = "";
+	this->boundary = boundary;
 }
 
 RequestBody::~RequestBody() {}
@@ -26,6 +27,10 @@ const EChunkedStatus& RequestBody::getChunkedStatus() const {
 
 const string& RequestBody::getBody() const {
 	return body;
+}
+
+const string& RequestBody::getBoundary() const {
+	return boundary;
 }
 
 void RequestBody::setContentLength(const size_t& contentLength) {

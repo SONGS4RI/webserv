@@ -31,7 +31,7 @@ Request::~Request() {
 	}
 }
 
-bool Request::getLineAndCheckCRLF(const char& deli) {//////////////////////////////////
+bool Request::getLineAndCheckCRLF(const char& deli) {
 	readbuf.getline(buf, TMP_SIZE, deli);
 	return checkCRLF();
 }
@@ -107,7 +107,7 @@ void Request::parseHeader() {
 		HTTPInfo::isValidHeaderField(properties);
 		status = BODY;
 		size_t contentLength = properties[CONTENT_LENGTH] != "" ? atoi(properties[CONTENT_LENGTH].c_str()) : 0;
-		body->init(properties[CONTENT_TYPE], contentLength);
+		body->init(properties[CONTENT_TYPE], contentLength, properties[BOUNDARY]);
 		Utils::log("Header Parse DONE", GREEN);
 		return ;
 	}

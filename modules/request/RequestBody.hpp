@@ -13,18 +13,20 @@ class RequestBody {
 		string contentType;
 		size_t contentLength;
 		EChunkedStatus chunkedStatus;
+		string boundary;
 		string body;
 	public:
 		RequestBody();
 		~RequestBody();
 		RequestBody(const RequestBody& obj);
 		const RequestBody& operator=(const RequestBody& obj);
-		void init(const string& contentType, const size_t& contentLength);
+		void init(const string& contentType, const size_t& contentLength, const string& boundary);
 
 		const string& getContentType() const;
 		const size_t& getContentLength() const;
 		const EChunkedStatus& getChunkedStatus() const;
 		const string& getBody() const;
+		const string& getBoundary() const;
 
 		void setContentLength(const size_t& contentLength);
 		void setChunkedStatus(const EChunkedStatus& chunkedStatus);
