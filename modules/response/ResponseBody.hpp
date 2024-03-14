@@ -37,16 +37,3 @@ class ResponseBody {
 };
 
 # endif
-
-/*
-
-메서드 관련 405
-
-GET 200 -> body
-    30X -> 404 html 리다이렉션
-POST 201 -> body X
-    400 -> 잘못된 url
-DELETE 204 -> body X
-    400 -> 잘못된 url
-
-*/
