@@ -158,12 +158,16 @@ void RequestHandler::handleCgiExecve() {
         dup2(pipefd[1], STDOUT_FILENO);
 
 		const char** argv = new const char*[3];
-        char **envp = NULL;
 		argv[0] = "/usr/bin/python3";
 		argv[1] = (HTTPInfo::defaultRoot + "/modules/cgi/main.py").c_str();
 		argv[2] = NULL;
-		char *const *argv_casted = const_cast<char *const *>(argv);
-        execve(argv[0], argv_casted, envp);
+		// const char **envp = new const char*[5];
+		// envp[0] = ("SAVE_PATH=" + HTTPInfo::defaultRoot + requestUrl).c_str();
+		// envp[1] = ("BOUNDARY=" + requestBody->getBoundary()).c_str();
+		// envp[2] = ("CONTENT_LENGTH=" + Utils::intToString(requestBody->getContentLength())).c_str();
+		// envp[3] = ("BODY=" + requestBody->getBody()).c_str();
+		// envp[4] = NULL;
+        execve(argv[0], const_cast<char *const *>(argv), NULL);
 		exit(EXIT_FAILURE);
     } else { // 부모 프로세스
         close(pipefd[1]);
@@ -178,10 +182,12 @@ void RequestHandler::handleCgiRead() {
 	cgiBuf[n] = '\0';
 	close(client->getPipeFd());
 	string location(cgiBuf);
+	cout << n << "\n";
 	cout << location << "\n";
 	if (location == "ERROR\n") {
-		throw StatusCode(500, "INTERVER_SERVER_ERROR");
+		throw StatusCode(500, INTERVER_SERVER_ERROR);
 	}
+	throw StatusCode(400, "GOOD");
 	responseBody->setStatusCode(StatusCode(201, CREATED));
 	responseBody->setLocation(location);
 }
