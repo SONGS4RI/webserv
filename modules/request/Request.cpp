@@ -31,7 +31,7 @@ Request::~Request() {
 	}
 }
 
-bool Request::getLineAndCheckCRLF(const char& deli) {//////////////////////////////////
+bool Request::getLineAndCheckCRLF(const char& deli) {
 	readbuf.getline(buf, TMP_SIZE, deli);
 	return checkCRLF();
 }
