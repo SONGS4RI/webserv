@@ -8,7 +8,7 @@
 #include <sstream>
 
 #include "RequestBody.hpp"
-#include "../parseConfig/Config.hpp"
+#include "../config/Config.hpp"
 #include "../server/Client.hpp"
 #include "../utils/Enums.hpp"
 #include "../utils/StatusCode.hpp"

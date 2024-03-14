@@ -35,9 +35,13 @@ ResponseBody* RequestHandler::handleRequest() {
 			throw responseBody->getStatusCode();
 		}
 		int status;
-		if (client->getPid() > 0 && waitpid(client->getPid(), &status, WNOHANG) > 0) {
-			handleCgiRead();
-			return responseBody;
+		if (client->getPid() > 0) {
+			if (waitpid(client->getPid(), &status, WNOHANG) > 0) {
+				handleCgiRead();
+				return responseBody;
+			}
+			cout << client->getPid() << ": waiting\n";////////////////////////////////////
+			return NULL;
 		}
 		checkResource();
 		if (method == GET) {
@@ -52,6 +56,7 @@ ResponseBody* RequestHandler::handleRequest() {
 		}
 	} catch(const StatusCode& statusCode) {
 		// Handle error
+		cout << statusCode.getMessage() << "\n";
 		handleError(statusCode);
 	}
 	return responseBody;
@@ -118,16 +123,7 @@ void RequestHandler::handleDelete() {
 }
 
 void RequestHandler::handlePost() {
-	string extension;
-	if (requestBody->getContentType() == APPLICATION_OCTET_STREAM) {
-		extension = ".bin";
-	} else if (requestBody->getContentType() == IMAGE_PNG) {
-		extension = ".png";
-	} else if (requestBody->getContentType() == TEXT_HTML) {
-		extension = ".html";
-	} else if (requestBody->getContentType() == TEXT_PLAIN) {
-		extension = ".txt";
-	}
+	string extension = ".bin";
 	time_t now = time(0);
 	srand(static_cast<unsigned int>(now));
 	tm* now_tm = localtime(&now);
@@ -137,15 +133,15 @@ void RequestHandler::handlePost() {
 	sprintf(time, "%04d%02d%02d_%02d%02d%02d",
                  1900 + now_tm->tm_year, now_tm->tm_mon + 1, now_tm->tm_mday,
                  now_tm->tm_hour, now_tm->tm_min, now_tm->tm_sec);
-	string fileName = string(time) + "_" + Utils::intToString(randomValue) + extension;
+	string fileName = "/" + string(time) + "_" + Utils::intToString(randomValue) + extension;
 
-    ofstream outFile(fileName.c_str(), std::ios::out | std::ios::binary);
+    ofstream outFile(HTTPInfo::defaultRoot + requestUrl + fileName.c_str(), std::ios::out | std::ios::binary);
 	if (!outFile) {
 		throw StatusCode(500, INTERVER_SERVER_ERROR);
 	}
 	outFile.write(requestBody->getBody().c_str(), requestBody->getBody().size());
 	outFile.close();
-	responseBody->setStatusCode(StatusCode(200, OK));
+	responseBody->setStatusCode(StatusCode(201, CREATED));
 	responseBody->setLocation(requestUrl + fileName);// 경로 설정
 }
 
@@ -161,9 +157,14 @@ void RequestHandler::handleCgiExecve() {
         close(pipefd[0]);
         dup2(pipefd[1], STDOUT_FILENO);
 
-        char **argv = NULL;// = {"/usr/bin/python", "script.py", NULL};
+        // const char **argv;// = {"/usr/bin/python", "script.py", NULL};
+		const char** argv = new const char*[3];
         char **envp = NULL;// = {NULL};
-        execve(argv[0], argv, envp);
+		argv[0] = "/usr/bin/python3";
+		argv[1] = (HTTPInfo::defaultRoot + "/modules/cgi/main.py").c_str();
+		argv[2] = NULL;
+		char *const *argv_casted = const_cast<char *const *>(argv);
+        execve(argv[0], argv_casted, envp);
 		exit(EXIT_FAILURE);
     } else { // 부모 프로세스
         close(pipefd[1]);
@@ -177,8 +178,10 @@ void RequestHandler::handleCgiRead() {
 	close(client->getPipeFd());
 	string location(buf);
 	if (location == "ERROR") {
-		throw StatusCode(500, INTERVER_SERVER_ERROR);
+		throw StatusCode(500, "error");
+		throw StatusCode(500, "INTERVER_SERVER_ERROR");
 	} else {
+		throw StatusCode(400, "good");
 		responseBody->setStatusCode(StatusCode(201, CREATED));
 		responseBody->setLocation(location);
 	}

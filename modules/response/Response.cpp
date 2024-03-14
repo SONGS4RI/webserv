@@ -1,6 +1,6 @@
 #include <cmath>
 #include "Response.hpp"
-#include "../parseConfig/Config.hpp"
+#include "../config/Config.hpp"
 
 Response::Response(ResponseBody* _body) : status(RP_STATUS_LINE), nextIdx(0) , statusLine("HTTP/1.1 "), body(_body) {
 	setStatusLine(_body->getStatusCode());

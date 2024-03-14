@@ -1,9 +1,9 @@
 NAME = webserv
 
 SRC = modules/main.cpp\
-	modules/parseConfig/Config.cpp\
-	modules/parseConfig/ParseConfig.cpp\
-	modules/parseConfig/Block.cpp\
+	modules/config/Config.cpp\
+	modules/config/ParseConfig.cpp\
+	modules/config/Block.cpp\
 	modules/request/Request.cpp\
 	modules/request/RequestBody.cpp\
 	modules/response/Response.cpp\

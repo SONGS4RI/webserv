@@ -6,7 +6,7 @@
 #include <map>
 
 #include "Client.hpp"
-#include "../parseConfig/Config.hpp"
+#include "../config/Config.hpp"
 #include "../utils/Utils.hpp"
 
 using namespace std;
