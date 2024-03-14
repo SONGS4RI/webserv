@@ -7,7 +7,7 @@
 #include "../utils/Utils.hpp"
 #include "../utils/StatusCode.hpp"
 #include "../server/SocketManager.hpp"
-#include "../parseConfig/Config.hpp"
+#include "../config/Config.hpp"
 
 using namespace std;
 

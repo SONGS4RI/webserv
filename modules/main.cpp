@@ -1,5 +1,5 @@
-#include "./parseConfig/ParseConfig.hpp"
-#include "./parseConfig/Config.hpp"
+#include "./config/ParseConfig.hpp"
+#include "./config/Config.hpp"
 #include "./response/Response.hpp"
 #include "./response/ResponseBody.hpp"
 #include "./utils/StatusCode.hpp"

@@ -5,7 +5,7 @@
 #include <map>
 #include <iostream>
 
-#include "../parseConfig/ParseConfig.hpp"
+#include "../config/ParseConfig.hpp"
 
 using namespace std;
 
