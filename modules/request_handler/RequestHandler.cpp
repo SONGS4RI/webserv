@@ -157,9 +157,8 @@ void RequestHandler::handleCgiExecve() {
         close(pipefd[0]);
         dup2(pipefd[1], STDOUT_FILENO);
 
-        // const char **argv;// = {"/usr/bin/python", "script.py", NULL};
 		const char** argv = new const char*[3];
-        char **envp = NULL;// = {NULL};
+        char **envp = NULL;
 		argv[0] = "/usr/bin/python3";
 		argv[1] = (HTTPInfo::defaultRoot + "/modules/cgi/main.py").c_str();
 		argv[2] = NULL;
@@ -174,17 +173,17 @@ void RequestHandler::handleCgiExecve() {
 }
 
 void RequestHandler::handleCgiRead() {
-	read(client->getPipeFd(), buf, bodyMaxSize);
+	char cgiBuf[BUF_SIZE + 1];
+	int n = read(client->getPipeFd(), cgiBuf, BUF_SIZE);
+	cgiBuf[n] = '\0';
 	close(client->getPipeFd());
-	string location(buf);
-	if (location == "ERROR") {
-		throw StatusCode(500, "error");
+	string location(cgiBuf);
+	cout << location << "\n";
+	if (location == "ERROR\n") {
 		throw StatusCode(500, "INTERVER_SERVER_ERROR");
-	} else {
-		throw StatusCode(400, "good");
-		responseBody->setStatusCode(StatusCode(201, CREATED));
-		responseBody->setLocation(location);
 	}
+	responseBody->setStatusCode(StatusCode(201, CREATED));
+	responseBody->setLocation(location);
 }
 
 void RequestHandler::handleError(const StatusCode& statusCode) {

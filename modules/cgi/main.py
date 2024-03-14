@@ -19,7 +19,7 @@ def main() :
 	# except Exception :
 	# 	print("ERROR")
 	time.sleep(1)
-	print("ERROR")
+	print("123456789")
 
 if __name__ == "__main__":
     main()
