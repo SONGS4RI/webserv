@@ -8,7 +8,12 @@
 
 using namespace std;
 
+void leaks() {
+	system("leaks webserv");
+}
+
 int main(int argc, char** argv) {
+	atexit(leaks);
 	if (argc != 2) {
 		Utils::exitWithErrmsg(string("Error: ") + argv[0] + " [ConfigFile]");
 	}
@@ -35,6 +40,4 @@ int main(int argc, char** argv) {
 			em->handleEvent(i);
 		}
 	}
-	delete sm;
-	delete em;
 }

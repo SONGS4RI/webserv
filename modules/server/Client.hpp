@@ -5,7 +5,6 @@
 #include "Server.hpp"
 #include "../request/Request.hpp"
 #include "../response/Response.hpp"
-//생성자에서 fcntl 실패했을 경우 처리해야할듯.
 
 using namespace std;
 

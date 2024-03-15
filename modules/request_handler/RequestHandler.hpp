@@ -25,7 +25,7 @@ class RequestHandler {
 		const Config*	config;
 		bool isUrlDir;
 		string index;
-		char* buf;// 동적인 것으로 변경
+		char* buf;
 		size_t bodyMaxSize;
 		void checkResource();
 		void handleGet();

@@ -50,7 +50,7 @@ bool Request::checkCRLF() {
 		leftOverBuffer = string(buf, readbuf.gcount());
 		return false;
 	} 
-	throw StatusCode(500, INTERNAL_SERVER_ERROR);
+	throw StatusCode(400, BAD_REQUEST);
 }
 
 void Request::parseStartLine() {
@@ -62,11 +62,10 @@ void Request::parseStartLine() {
 	startLine >> method >> requestUrl >> httpVersion;
 	if (!startLine.eof() || startLine.fail() || buf[method.size()] != ' ' ||
 		buf[method.size() + 1 + requestUrl.size()] != ' ') {
-		throw StatusCode(400, "잘못된 형식");
+		throw StatusCode(400, BAD_REQUEST);
 	}
 	const Config& serverConfig = client->getServer().getServerConfig();
-	// string index = requestUrl == "/" ? serverConfig.getIndex() : serverConfig.getIndex(requestUrl);// 루트 페이지
-	index = serverConfig.getIndex(requestUrl);// 루트 페이지
+	index = serverConfig.getIndex(requestUrl);
 	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion, &client->getServer().getServerConfig());
 	if (requestUrl == "/favicon.ico") {
 		requestUrl = "/root/favicon.ico";
@@ -85,11 +84,11 @@ void Request::checkHeaderLineBlock(const string& tmpKey, istringstream& block) {
 	keyblock >> key >> rest;
 	// 이미 들어온 키이거나 잘못된 형식
 	if (properties[key].size() || rest.size()) {
-		throw StatusCode(400, "이미 들어온 키이거나 잘못된 형식");
+		throw StatusCode(400, BAD_REQUEST);
 	}
 	block >> value >> rest;
 	if (value == "" || rest.size()) {
-		throw StatusCode(400, "HeaderLine: 잘못된 형식");
+		throw StatusCode(400, BAD_REQUEST);
 	}
 	block.clear();
 	block.str(key);
@@ -143,7 +142,7 @@ void Request::parseDefaultBody() {
 		Utils::log("Body Parse DONE", GREEN);
 	}
 	if (targetLength < 0) {
-		throw StatusCode(400, "content-length 불일치");
+		throw StatusCode(400, BAD_REQUEST);
 	}
 }
 
@@ -154,7 +153,7 @@ void Request::parseChunkedBody() {
 				return ;
 			}
 			body->setChunkedStatus(DATA);
-			body->setContentLength(Utils::hexToDecimal(buf));// int contentLength = hex -> 십진수
+			body->setContentLength(Utils::hexToDecimal(buf));
 			if (!body->getContentLength()) {
 				status = PARSE_DONE;
 				Utils::log("Body Parse DONE", GREEN);
@@ -165,7 +164,7 @@ void Request::parseChunkedBody() {
 				return ;
 			}
 			if (readbuf.gcount() - 2 != (long)body->getContentLength()) {
-				throw StatusCode(400, "content-lenght 불일치");
+				throw StatusCode(400, BAD_REQUEST);
 			}
 			body->setChunkedStatus(CRLF);
 			body->addBody(buf, readbuf.gcount() - 2);
@@ -175,7 +174,7 @@ void Request::parseChunkedBody() {
 				return ;
 			}
 			if (readbuf.gcount() != 2) {
-				throw StatusCode(400, "마지막  crlf");
+				throw StatusCode(400, BAD_REQUEST);
 			}
 			body->setChunkedStatus(LENGTH);
 		}
@@ -221,10 +220,10 @@ void Request::parseRequest() {
 				parseStartLine();
 			} else if (status == PARSE_DONE) {
 				if (properties[TRANSFER_ENCODING] != CHUNKED && readenContentLength != body->getContentLength()) {// contentLength 있는 경우 없는경우 체크
-					throw StatusCode(400, "content-length 불일치");
+					throw StatusCode(400, BAD_REQUEST);
 				}
 				if (readenContentLength > client->getServer().getServerConfig().getClientMaxBodySize()) {
-					throw StatusCode(400, "Max Body Size 초과");
+					throw StatusCode(400, BAD_REQUEST);
 				}
 				break ;
 			}

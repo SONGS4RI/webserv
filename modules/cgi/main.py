@@ -1,7 +1,6 @@
 import os
 import cgi
 import sys
-# from PIL import Image
 from io import BytesIO
 import time
 
