@@ -21,12 +21,12 @@ class Config {
 		int		port;//default 8080 unsigned short range 벗어나면 에러
 		string	serverName;//default webserv.com
 		string	root;//default /
+		string	defaultErrorPage;//default 빈 문자열
+		bool	autoindexOn;//default on
 		/*서버, 로케이션 둘 다 있을 수 있음*/
 		string	index;//default 빈 문자열
 		size_t	clientMaxBodySize;//default 1000000, int range벗어나면 에러
-		string	defaultErrorPage;//default 빈 문자열
 		vector<string>	allowMethods;//default 비어있음
-		bool	autoindexOn;//default on
 		/* locations 에만 적용, 서버에는 비어있음 */
 		string	alias;//default 빈 문자열
 
@@ -51,7 +51,6 @@ class Config {
 		const size_t& getClientMaxBodySize() const;
 		const size_t& getClientMaxBodySize(string loc) const;
 		const string&	getDefaultErrorPage() const;
-		const string&	getDefaultErrorPage(string loc) const;
 		const string	getIndex() const;
 		const string	getIndex(string loc) const;
 		const bool&	getAutoindexOn() const;

@@ -20,6 +20,7 @@
 		"filesystem": "cpp",
 		"stdexcept": "cpp",
 		"utility": "cpp",
-		"algorithm": "cpp"
+		"algorithm": "cpp",
+		"memory": "cpp"
 	}
 }
