@@ -21,7 +21,7 @@ Request::Request(const Client* client) {
 	this->statusCode = StatusCode();
 	this->readbuf.clear();
 	this->client = client;
-	this->isUrlIndex = false;
+	this->index = "";
 }
 
 Request::~Request() {
@@ -50,7 +50,7 @@ bool Request::checkCRLF() {
 		leftOverBuffer = string(buf, readbuf.gcount());
 		return false;
 	} 
-	throw StatusCode(500, INTERVER_SERVER_ERROR);
+	throw StatusCode(500, INTERNAL_SERVER_ERROR);
 }
 
 void Request::parseStartLine() {
@@ -66,15 +66,12 @@ void Request::parseStartLine() {
 	}
 	const Config& serverConfig = client->getServer().getServerConfig();
 	// string index = requestUrl == "/" ? serverConfig.getIndex() : serverConfig.getIndex(requestUrl);// 루트 페이지
-	string index = serverConfig.getIndex(requestUrl);// 루트 페이지
-	if (index != "") {
-		isUrlIndex = true;
-	}
+	index = serverConfig.getIndex(requestUrl);// 루트 페이지
 	HTTPInfo::isValidStartLine(method, requestUrl, httpVersion, &client->getServer().getServerConfig());
 	if (requestUrl == "/favicon.ico") {
 		requestUrl = "/root/favicon.ico";
 	} else {
-		requestUrl = serverConfig.getRoot() + (isUrlIndex ? index : requestUrl);
+		requestUrl = serverConfig.getRoot() + requestUrl;
 	}
 	properties[METHOD] = method;
 	properties[REQUEST_URL] = requestUrl;
@@ -245,4 +242,4 @@ RequestBody* Request::getBody() const { return (body);}
 
 const StatusCode& Request::getStatusCode() const { return (statusCode);}
 
-const bool& Request::getIsUrlIndex() const { return (isUrlIndex);};
+const string& Request::getIndex() const { return (index);};

@@ -24,7 +24,7 @@ class RequestHandler {
 		Client* client;
 		const Config*	config;
 		bool isUrlDir;
-		bool isUrlIndex;
+		string index;
 		char* buf;// 동적인 것으로 변경
 		size_t bodyMaxSize;
 		void checkResource();
@@ -34,6 +34,7 @@ class RequestHandler {
 		void handleCgiExecve();
 		void handleCgiRead();
 		void handleError(const StatusCode& statusCode);
+		void handleRedirect(const StatusCode& statusCode);
 		void dirListing(const string& source, string& url);
 	public:
 		RequestHandler(const Request* request, Client* client);

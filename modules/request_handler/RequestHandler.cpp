@@ -13,7 +13,7 @@ RequestHandler::RequestHandler(const Request* request, Client* client) {
 	this->bodyMaxSize = 0;
 	this->buf = NULL;
 	this->config = &client->getServer().getServerConfig();
-	this->isUrlIndex = request->getIsUrlIndex();
+	this->index = request->getIndex();
 	if (request->getStatus() != ERROR) {
 		this->bodyMaxSize =  config->getClientMaxBodySize();
 		this->buf = new char[bodyMaxSize];
@@ -55,26 +55,33 @@ ResponseBody* RequestHandler::handleRequest() {
 		}
 	} catch(const StatusCode& statusCode) {
 		// Handle error
-		handleError(statusCode);
+		if (statusCode.getStatusCode() >= 400) {
+			handleError(statusCode);
+		} else {
+			handleRedirect(statusCode);
+		}
 	}
 	return responseBody;
 }
 
 void RequestHandler::handleGet() {
 	bool autoIndex = config->getAutoindexOn();
-	if (autoIndex && isUrlDir && !isUrlIndex) {
+	if (isUrlDir) {
+		if (index != "") {
+			throw StatusCode(303, SEE_OTHERS);
+		}
+		if (!autoIndex) {
+			throw StatusCode(500, INTERNAL_SERVER_ERROR);
+		}
 		string resource = HTTPInfo::defaultRoot + requestUrl;
 		dirListing(resource, requestUrl);
-	} else if (!autoIndex && isUrlDir && !isUrlIndex) {
-		throw StatusCode(400, BAD_REQUEST);
 	} else {
 		size_t idx = requestUrl.rfind('.');
 		string contentType = idx != SIZE_T_MAX ? string(requestUrl.begin() + idx + 1, requestUrl.end()) : "";
 		int fd = open((HTTPInfo::defaultRoot + requestUrl).c_str(), O_RDONLY);
 		int n = read(fd, buf, bodyMaxSize);
 		if (n < 0) {// max size 보다 클때도 추가
-		
-			throw StatusCode(500, INTERVER_SERVER_ERROR);
+			throw StatusCode(500, INTERNAL_SERVER_ERROR);
 		}
 		responseBody->setStatusCode(StatusCode(200, OK));
 		responseBody->setContentType(HTTPInfo::convertToMIME(contentType));
@@ -113,7 +120,7 @@ void RequestHandler::dirListing(const string& resource, string& uri) {
 
 void RequestHandler::handleDelete() {
 	if (remove((HTTPInfo::defaultRoot + requestUrl).c_str()) != 0) {
-		throw StatusCode(500, INTERVER_SERVER_ERROR);
+		throw StatusCode(500, INTERNAL_SERVER_ERROR);
 	}
 	responseBody->setStatusCode(StatusCode(204, NO_CONTENT));
 }
@@ -133,7 +140,7 @@ void RequestHandler::handlePost() {
 
     ofstream outFile(HTTPInfo::defaultRoot + requestUrl + fileName.c_str(), std::ios::out | std::ios::binary);
 	if (!outFile) {
-		throw StatusCode(500, INTERVER_SERVER_ERROR);
+		throw StatusCode(500, INTERNAL_SERVER_ERROR);
 	}
 	outFile.write(requestBody->getBody().c_str(), requestBody->getBody().size());
 	outFile.close();
@@ -147,7 +154,7 @@ void RequestHandler::handleCgiExecve() {
     pid_t pid;
 
     if (pipe(ctop) == -1 || pipe(ptoc) == -1 || (pid = fork()) == -1) {
-        throw StatusCode(500, INTERVER_SERVER_ERROR);
+        throw StatusCode(500, INTERNAL_SERVER_ERROR);
     }
 
     if (pid == 0) { // 자식 프로세스
@@ -193,7 +200,7 @@ void RequestHandler::handleCgiRead() {
 	close(client->getPipeFd());
 	string location(cgiBuf);
 	if (location == "ERROR\n") {
-		throw StatusCode(500, INTERVER_SERVER_ERROR);
+		throw StatusCode(500, INTERNAL_SERVER_ERROR);
 	}
 	responseBody->setStatusCode(StatusCode(201, CREATED));
 	responseBody->setLocation(location);
@@ -207,10 +214,15 @@ void RequestHandler::handleError(const StatusCode& statusCode) {
 	char errorBuf[TMP_SIZE * 2];
 	int n = read(fd, errorBuf, sizeof(errorBuf));
 	if (n < 0) {
-		Utils::exitWithErrmsg(INTERVER_SERVER_ERROR);
+		Utils::exitWithErrmsg(INTERNAL_SERVER_ERROR);
 	}
 	responseBody->setContentLength(n);
 	responseBody->setBody(errorBuf, n);
+}
+
+void RequestHandler::handleRedirect(const StatusCode& statusCode) {
+	responseBody->setStatusCode(statusCode);
+	responseBody->setLocation(index);
 }
 
 void RequestHandler::checkResource() {

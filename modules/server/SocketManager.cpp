@@ -35,7 +35,7 @@ void	SocketManager::addClient(int serverSocket, int clientSocket) {
 	Server*	server = this->getServers().find(serverSocket)->second;
 	server->addClient(clientSocket);
 	if (fcntl(clientSocket, F_SETFL, O_NONBLOCK, FD_CLOEXEC) == -1) {
-		throw StatusCode(500, INTERVER_SERVER_ERROR);
+		throw StatusCode(500, INTERNAL_SERVER_ERROR);
 	}
 	Utils::log("Connect Client: " + Utils::intToString(clientSocket) + " to Server: " +
 				Utils::intToString(serverSocket), YELLOW);

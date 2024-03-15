@@ -11,7 +11,7 @@ using namespace std;
 #define SEE_OTHERS "SEE OTHERS"
 #define NOT_FOUND "NOT FOUND"
 #define FORBIDDEN "FORBIDDEN"
-#define INTERVER_SERVER_ERROR "INTERVER SERVER ERROR"
+#define INTERNAL_SERVER_ERROR "INTERNAL SERVER ERROR"
 
 class StatusCode {
 	private:

@@ -112,7 +112,7 @@ void	Config::setByBlock(Block& block) {
 	}
 }
 
-const EConfigType	Config::getType() const { return (type);}
+const EConfigType&	Config::getType() const { return (type);}
 
 const int&	Config::getPort() const { return (port);}
 
