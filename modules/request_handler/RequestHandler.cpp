@@ -133,9 +133,10 @@ void RequestHandler::handlePost() {
 	tm* now_tm = localtime(&now);
     int randomValue = rand() % 100000 + 1;
 	char time[26];
-	sprintf(time, "%04d%02d%02d_%02d%02d%02d",
-                 1900 + now_tm->tm_year, now_tm->tm_mon + 1, now_tm->tm_mday,
-                 now_tm->tm_hour, now_tm->tm_min, now_tm->tm_sec);
+	strftime(time, sizeof(time), "%Y%m%d_%H%M%S", now_tm);
+	// sprintf(time, "%04d%02d%02d_%02d%02d%02d",
+    //              1900 + now_tm->tm_year, now_tm->tm_mon + 1, now_tm->tm_mday,
+    //              now_tm->tm_hour, now_tm->tm_min, now_tm->tm_sec);
 	string fileName = "/" + string(time) + "_" + Utils::intToString(randomValue) + extension;
 
     ofstream outFile(HTTPInfo::defaultRoot + requestUrl + fileName.c_str(), std::ios::out | std::ios::binary);

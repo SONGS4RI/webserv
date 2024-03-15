@@ -38,7 +38,7 @@ void Server::init(const int& _serverSocket) {
 	if (bind(_serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
 		Utils::exitWithErrmsg("Error: bind()");
 	}
-	if (listen(_serverSocket, 10) == -1) {
+	if (listen(_serverSocket, 30) == -1) {
 		Utils::exitWithErrmsg("Error: listen()");
 	}
 	if (fcntl(_serverSocket, F_SETFL, O_NONBLOCK, FD_CLOEXEC) == -1) {
