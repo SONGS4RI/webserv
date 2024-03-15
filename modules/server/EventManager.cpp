@@ -86,25 +86,26 @@ void EventManager::handleEvent(const int& eventIdx) {
 			}
 		} else if (curEvent->udata == NULL) {
 			// 클라이언트의 처리 상태에 따라 이벤트 처리
-			Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Parsing", GREEN);
+			Utils::log("Client[READ]: " + Utils::intToString(curEvent->ident) + ": Parsing", GREEN);
 			Request* request = client->getRequest();// NULL 이면 할당해서 주기
 			request->parseRequest();
 			if (request->getStatus() == PARSE_DONE || request->getStatusCode().getStatusCode() >= 400) {
-				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": " +
-				(request->getStatus() == PARSE_DONE ? "Parse Done" : "Parse Error: " + request->getStatusCode().getMessage()), GREEN);
+				Utils::log("Client[READ]: " + Utils::intToString(curEvent->ident) + ": " +
+				(request->getStatus() == PARSE_DONE ? "Parse Done" : "Parse Error: " + request->getStatusCode().getMessage()), YELLOW);
 				// changeEvent(curEvent, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 				// changeEvent(curEvent->ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, request);
+				changeEvent(curEvent->ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 				changeEvent(curEvent->ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, request);
 			}
 		}
 	} else if (curEvent->filter ==  EVFILT_WRITE) {// 쓰기
 		if (client->getResponse() == NULL) {// udata -> Request
-			Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Handle Request Start", GREEN);
+			Utils::log("Client[WRITE]: " + Utils::intToString(curEvent->ident) + ": Handle Request Start", GREEN);
 			Request* request = (Request *)curEvent->udata;
 			RequestHandler requestHandler = RequestHandler(request, client);// 새로 생성하는 거 수정 가능할 지도
 			ResponseBody* responseBody = requestHandler.handleRequest();
 			if (responseBody != NULL) {// cgi 아니라면
-				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Response Created: " +
+				Utils::log("Client[WRITE]: " + Utils::intToString(curEvent->ident) + ": Response Created: " +
 				responseBody->getStatusCode().getMessage(), GREEN);
 				Response* response= new Response(responseBody);
 				// if (responseBody->getStatusCode().getStatusCode() >= 400) {
@@ -115,11 +116,11 @@ void EventManager::handleEvent(const int& eventIdx) {
 				client->setResponse(response);
 			}
 		} else {//client->getResponse() != NULL
-			Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Writing", GREEN);
+			Utils::log("Client[WRITE]: " + Utils::intToString(curEvent->ident) + ": Writing", GREEN);
 			Response* response = client->getResponse();
 			response->writeToSocket(curEvent->ident);
 			if (response->isDone()) {
-				Utils::log("Client: " + Utils::intToString(curEvent->ident) + ": Write Done", GREEN);
+				Utils::log("Client[WRITE]: " + Utils::intToString(curEvent->ident) + ": Write Done", GREEN);
 				sm->disconnectClient(curEvent->ident);
 				changeEvent(curEvent->ident, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
 			}

@@ -12,15 +12,22 @@ Config::Config(Block& globalBlock, Block& serverBlock) {
 	defaultErrorPage = "error.html";
 	autoindexOn = true;
 	alias = "";
-	try
-	{
+	try	{
 		setByBlock(globalBlock);//global block
 		setByBlock(globalBlock.blocks[0]);//http block
 		setByBlock(serverBlock);//server block
 		/* 서버블록의 하위 location 블록들을 set 함. */
 		//Location의 "/" config를 반드시 하나 생성함.
 		locations["/"] = Config(*this, NULL);
+		string	loc;
 		for (size_t i = 0; i < serverBlock.blocks.size(); i++) {
+			loc = serverBlock.blocks[i].getLocation();
+			if (loc.front() != '/') {
+				throw "Error: Location Path must start '/' in configfile";
+			}
+			if (loc.size() > 1 && loc.back() == '/') {
+				throw "Error: Location Path cannot end '/' in configfile";
+			}
 			locations[serverBlock.blocks[i].getLocation()] = Config(*this, &serverBlock.blocks[i]);
 		}
 	} catch(const char* errmsg) {
@@ -47,9 +54,6 @@ void	Config::setByBlock(Block& block) {
 	map<string, vector<string> >::const_iterator	it;
 
 	/* 모든 블록에 있을 수 있는 지시어 */
-	if ((it = block.directives.find("error_page")) != block.directives.end()) {
-		defaultErrorPage = it->second[0];
-	}
 	if ((it = block.directives.find("client_max_body_size")) != block.directives.end()) {
 		if (isWrongClientMaxBodySize(it->second[0])) {
 			throw "Error: client_max_body_size is wrong in configfile";
@@ -70,17 +74,20 @@ void	Config::setByBlock(Block& block) {
 			}
 		}
 	}
-	if ((it = block.directives.find("root")) != block.directives.end()) {
-		if (isWrongPath(it->second[0]) == true) {
-			cout << it->second[0] << endl;
-			throw "Error: root Path is wrong in configfile";
+	if (block.type != "location") {//서버블록에만 있는 지시어
+		if ((it = block.directives.find("error_page")) != block.directives.end()) {
+			defaultErrorPage = it->second[0];
 		}
-		root = "/root" + (it->second[0] == "/" ? "" : it->second[0]);
-		if (root.back() == '/') {
-			throw "Error: root Path is wrong in configfile";
+		if ((it = block.directives.find("root")) != block.directives.end()) {
+			if (isWrongPath(it->second[0]) == true) {
+				cout << it->second[0] << endl;
+				throw "Error: root Path is wrong in configfile";
+			}
+			root = "/root" + (it->second[0] == "/" ? "" : it->second[0]);
+			if (root.back() == '/') {
+				throw "Error: root Path is wrong in configfile";
+			}
 		}
-	}
-	if (block.type == "server") {//서버블록에만 있는 지시어
 		if ((it = block.directives.find("autoindex")) != block.directives.end()) {
 			if (it->second[0] == "off") {
 				autoindexOn = false;
@@ -123,13 +130,6 @@ const size_t& Config::getClientMaxBodySize(string loc) const {
 }
 
 const string&	Config::getDefaultErrorPage() const { return (defaultErrorPage);}
-const string&	Config::getDefaultErrorPage(string loc) const {
-	map<string, Config>::const_iterator it = locations.find(loc);
-	if (it != locations.end()) {
-		return (it->second.getDefaultErrorPage());
-	}
-	return (defaultErrorPage);
-}
 
 const string	Config::getIndex() const { return (index);}
 const string	Config::getIndex(string loc) const {
@@ -177,10 +177,10 @@ void	Config::printAllInfo() const {
 		cout << endl;
 		cout << "alias: " << this->alias << endl;
 		for (map<string, Config>::const_iterator it = locations.begin(); it != locations.end(); it++) {
+			cout << "\t==== LOCATION "<< it->first <<" =====" << endl;
 			it->second.printAllInfo();
 		}
 	} else if (this->getType() == LOCATION_CONFIG) {
-		cout << "\t======== LOCATION =========" << endl;
 		cout << "\ttype: LOCATION_CONFIG" << endl;
 		cout << "\tport: " << port << endl;
 		cout << "\tserverName: " << serverName << endl;

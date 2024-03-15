@@ -55,7 +55,6 @@ ResponseBody* RequestHandler::handleRequest() {
 		}
 	} catch(const StatusCode& statusCode) {
 		// Handle error
-		cout << statusCode.getMessage() << "\n";
 		handleError(statusCode);
 	}
 	return responseBody;
@@ -193,7 +192,6 @@ void RequestHandler::handleCgiRead() {
 	cgiBuf[n] = '\0';
 	close(client->getPipeFd());
 	string location(cgiBuf);
-	cout << location << "\n";
 	if (location == "ERROR\n") {
 		throw StatusCode(500, INTERVER_SERVER_ERROR);
 	}

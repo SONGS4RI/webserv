@@ -92,7 +92,7 @@ void Request::checkHeaderLineBlock(const string& tmpKey, istringstream& block) {
 	}
 	block >> value >> rest;
 	if (value == "" || rest.size()) {
-		throw StatusCode(400, "잘못된 형식");
+		throw StatusCode(400, "HeaderLine: 잘못된 형식");
 	}
 	block.clear();
 	block.str(key);
@@ -233,7 +233,6 @@ void Request::parseRequest() {
 			}
 		}
 	} catch(const StatusCode& sc) {
-		Utils::log(sc.getMessage(), RED);
 		statusCode = sc;
 	}
 }
