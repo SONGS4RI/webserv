@@ -1,136 +1,99 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>HTTP Request Sender</title>
-<script>
-function sendRequest() {
-    var xhr = new XMLHttpRequest();
-    var url = document.getElementById("url-input").value;
-    var method = document.getElementById('method-select').value;
-    var responseContainer = document.getElementById("response-container");
-    const fileInput = document.getElementById('fileInput');
-    const file = fileInput.files[0]; // 선택된 파일 가져오기
-    const contentType = document.querySelector('input[name="contentType"]:checked').value; // 전송 방식 선택
-    if (method == 'POST') {
-        if (!file) {
-            alert('파일을 선택해주세요.');
-            return;
-        }
-
-        // multipart/form-data 방식
-        if (contentType === 'multipart') {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            fetch(url, {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => response.json())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
-        }
-        // application/octet-stream 방식
-        else if (contentType === 'octet') {
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/octet-stream',
-                },
-                body: file,
-            })
-            .then(response => response.json())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
-        }
-    } else {
-        if (file) {
-            alert('파일 업로드는 POST');
-            return;
-        }
-        xhr.open(method, url, true);
-
-        xhr.responseType = 'blob';
-        xhr.onload = function () {
-            var contentType = xhr.getResponseHeader('Content-Type');
-            if (contentType.includes('text/html')) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    responseContainer.innerHTML = e.target.result;
-                }
-                reader.readAsText(xhr.response);
-            } else if (contentType.includes('text/plain')) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    responseContainer.innerText = e.target.result;
-                }
-                reader.readAsText(xhr.response);
-            } else if (contentType.includes('image/png')) {
-                var img = new Image();
-                var url = URL.createObjectURL(xhr.response);
-                img.onload = function() {
-                    responseContainer.innerHTML = '';
-                    responseContainer.style.display = 'flex';
-                    responseContainer.appendChild(img);
-                    URL.revokeObjectURL(url);
-                }
-                img.src = url;
-            } else {
-                responseContainer.innerText = '지원하지 않는 파일 형식입니다.';
-            }
-        };
-
-        xhr.onerror = function () {
-            responseContainer.innerText = '요청 중 에러가 발생했습니다.';
-        };
-        xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
-        xhr.send();
-    }
-}
-</script>
-</head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Form</title>
 <style>
-	#url-input {
-	  width: 75%;
-	}
-	#response-container {
-		white-space: pre;
-		border: 1px solid #000;
-		min-height: 100px;
-		overflow: auto;
-		margin-top: 10px;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		height: 500px;
-	}
-	#response-container img {
-		max-width: 100%;
-		max-height: 100%;
-	}
+  body {
+    font-family: Arial, sans-serif;
+  }
+  #responseContainer img {
+    max-width: 100%;
+    height: auto;
+  }
 </style>
-
+</head>
 <body>
-
-<div>
-    <select id="method-select">
-        <option value="GET">GET</option>
-        <option value="POST">POST</option>
-        <option value="DELETE">DELETE</option>
-        <option value="PUT">PUT</option>
+<form id="advancedForm">
+  <div>
+    <select id="methodSelect">
+      <option value="GET" selected>GET</option>
+      <option value="POST">POST</option>
+      <option value="DELETE">DELETE</option>
     </select>
-    <input type="text" id="url-input" value="http://localhost:">
-    <button onclick="sendRequest()">Send Request</button>
-</div>
+    <input type="text" id="urlInput" value="http://localhost:" required style="width: 70%;">
+    <button type="button" id="sendButton">Send</button>
+  </div>
+  <div style="margin-top: 10px;">
+	  <select id="contentTypeSelect">
+		  <option value="multipart/form-data">multipart/form-data</option>
+		  <option value="application/octet-stream">application/octet-stream</option>
+		</select>
+	  <input type="file" id="fileInput">
+	</div>
+</form>
+<div id="responseContainer" style="margin-top: 30px;"></div>
+<script>
+document.getElementById('methodSelect').addEventListener('change', function() {
+  const method = this.value;
+  const fileInput = document.getElementById('fileInput');
+  const contentTypeSelect = document.getElementById('contentTypeSelect');
+  if (method !== 'POST') {
+    fileInput.disabled = true;
+    contentTypeSelect.disabled = true;
+  } else {
+    fileInput.disabled = false;
+    contentTypeSelect.disabled = false;
+  }
+});
 
-<div class="centered-text">
-    <input type="file" id="fileInput">
-    <label><input type="radio" name="contentType" value="multipart" checked> multipart/form-data</label>
-    <label><input type="radio" name="contentType" value="octet"> application/octet-stream</label>
-</div>
+document.getElementById('sendButton').addEventListener('click', function() {
+  const method = document.getElementById('methodSelect').value;
+  const url = document.getElementById('urlInput').value;
+  if (!url) {
+    alert('URL is required');
+    return;
+  }
 
-<div id="response-container"></div>
+  let headers = new Headers();
+  const fileInput = document.getElementById('fileInput');
+  const contentTypeSelect = document.getElementById('contentTypeSelect').value;
+  
+  let body = null;
+  if (fileInput.files.length > 0 && method === 'POST') {
+    if (contentTypeSelect === 'application/octet-stream') {
+      body = fileInput.files[0];
+      headers.append('Content-Type', 'application/octet-stream');
+    } else {
+      body = new FormData();
+      body.append('file', fileInput.files[0]);
+    }
+  }
 
+  fetch(url, {
+    method: method,
+    headers: headers,
+    body: method !== 'GET' ? body : null,
+  })
+  .then(response => {
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+      return response.json().then(data => JSON.stringify(data));
+    } else if (contentType && contentType.indexOf("image/png") !== -1) {
+      return response.blob().then(blob => {
+        const imgURL = URL.createObjectURL(blob);
+        return `<img src="${imgURL}" alt="Response Image">`;
+      });
+    } else {
+      return response.text();
+    }
+  })
+  .then(data => {
+    document.getElementById('responseContainer').innerHTML = data;
+  })
+  .catch(error => console.error('Error:', error));
+});
+</script>
 </body>
 </html>
