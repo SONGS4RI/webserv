@@ -21,6 +21,7 @@
 		"stdexcept": "cpp",
 		"utility": "cpp",
 		"algorithm": "cpp",
-		"memory": "cpp"
+		"memory": "cpp",
+		"memory_resource": "cpp"
 	}
 }

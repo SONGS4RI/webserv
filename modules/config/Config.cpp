@@ -54,12 +54,6 @@ void	Config::setByBlock(Block& block) {
 	map<string, vector<string> >::const_iterator	it;
 
 	/* 모든 블록에 있을 수 있는 지시어 */
-	if ((it = block.directives.find("client_max_body_size")) != block.directives.end()) {
-		if (isWrongClientMaxBodySize(it->second[0])) {
-			throw "Error: client_max_body_size is wrong in configfile";
-		}
-		clientMaxBodySize = atoi(it->second[0].c_str());
-	}
 	if ((it = block.directives.find("index")) != block.directives.end()) {
 		index = it->second[0];
 	}
@@ -75,6 +69,12 @@ void	Config::setByBlock(Block& block) {
 		}
 	}
 	if (block.type != "location") {//서버블록에만 있는 지시어
+		if ((it = block.directives.find("client_max_body_size")) != block.directives.end()) {
+			if (isWrongClientMaxBodySize(it->second[0])) {
+				throw "Error: client_max_body_size is wrong in configfile";
+			}
+			clientMaxBodySize = atoi(it->second[0].c_str());
+		}
 		if ((it = block.directives.find("error_page")) != block.directives.end()) {
 			defaultErrorPage = it->second[0];
 		}
@@ -121,13 +121,6 @@ const string&	Config::getRoot() const { return (root);}
 const string&	Config::getServerName() const { return (serverName);}
 
 const size_t& Config::getClientMaxBodySize() const { return (clientMaxBodySize);}
-const size_t& Config::getClientMaxBodySize(string loc) const {
-	map<string, Config>::const_iterator it = locations.find(loc);
-	if (it != locations.end()) {
-		return (it->second.getClientMaxBodySize());
-	}
-	return (clientMaxBodySize);
-}
 
 const string&	Config::getDefaultErrorPage() const { return (defaultErrorPage);}
 

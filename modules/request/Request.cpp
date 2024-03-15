@@ -219,13 +219,15 @@ void Request::parseRequest() {
 			} else if (status == START_LINE) {
 				parseStartLine();
 			} else if (status == PARSE_DONE) {
-				if (properties[TRANSFER_ENCODING] != CHUNKED && readenContentLength != body->getContentLength()) {// contentLength 있는 경우 없는경우 체크
-					throw StatusCode(400, BAD_REQUEST);
-				}
-				if (readenContentLength > client->getServer().getServerConfig().getClientMaxBodySize()) {
-					throw StatusCode(400, BAD_REQUEST);
-				}
 				break ;
+			}
+		}
+		if (status == PARSE_DONE) {
+			if (properties[TRANSFER_ENCODING] != CHUNKED && readenContentLength != body->getContentLength()) {// contentLength 있는 경우 없는경우 체크
+				throw StatusCode(400, BAD_REQUEST);
+			}
+			if (readenContentLength > client->getServer().getServerConfig().getClientMaxBodySize()) {
+				throw StatusCode(400, BAD_REQUEST);
 			}
 		}
 	} catch(const StatusCode& sc) {

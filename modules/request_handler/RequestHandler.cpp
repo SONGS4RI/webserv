@@ -70,7 +70,7 @@ void RequestHandler::handleGet() {
 			throw StatusCode(303, SEE_OTHERS);
 		}
 		if (!autoIndex) {
-			throw StatusCode(500, INTERNAL_SERVER_ERROR);
+			throw StatusCode(400, BAD_REQUEST);
 		}
 		string resource = HTTPInfo::defaultRoot + requestUrl;
 		dirListing(resource, requestUrl);
@@ -134,19 +134,17 @@ void RequestHandler::handlePost() {
     int randomValue = rand() % 100000 + 1;
 	char time[26];
 	strftime(time, sizeof(time), "%Y%m%d_%H%M%S", now_tm);
-	// sprintf(time, "%04d%02d%02d_%02d%02d%02d",
-    //              1900 + now_tm->tm_year, now_tm->tm_mon + 1, now_tm->tm_mday,
-    //              now_tm->tm_hour, now_tm->tm_min, now_tm->tm_sec);
 	string fileName = "/" + string(time) + "_" + Utils::intToString(randomValue) + extension;
 
     ofstream outFile(HTTPInfo::defaultRoot + requestUrl + fileName.c_str(), std::ios::out | std::ios::binary);
 	if (!outFile.is_open()) {
 		throw StatusCode(500, INTERNAL_SERVER_ERROR);
 	}
+	
 	outFile.write(requestBody->getBody().c_str(), requestBody->getBody().size());
 	outFile.close();
 	responseBody->setStatusCode(StatusCode(201, CREATED));
-	responseBody->setLocation(requestUrl + fileName);
+	responseBody->setLocation(requestUrl.substr(config->getRoot().size()) + fileName);
 }
 
 void RequestHandler::handleCgiExecve() {

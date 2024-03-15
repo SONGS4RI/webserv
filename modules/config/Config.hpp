@@ -23,9 +23,9 @@ class Config {
 		string	root;//default /
 		string	defaultErrorPage;//default 빈 문자열
 		bool	autoindexOn;//default on
+		size_t	clientMaxBodySize;//default 1000000, int range벗어나면 에러
 		/*서버, 로케이션 둘 다 있을 수 있음*/
 		string	index;//default 빈 문자열
-		size_t	clientMaxBodySize;//default 1000000, int range벗어나면 에러
 		vector<string>	allowMethods;//default 비어있음
 		/* locations 에만 적용, 서버에는 비어있음 */
 		string	alias;//default 빈 문자열
@@ -49,7 +49,6 @@ class Config {
 		loc없는건 서버 config에서 가져옴
 		loc있는건 location config에 있으면 가져오고 없으면 서버config에서 가져옴*/
 		const size_t& getClientMaxBodySize() const;
-		const size_t& getClientMaxBodySize(string loc) const;
 		const string&	getDefaultErrorPage() const;
 		const string	getIndex() const;
 		const string	getIndex(string loc) const;
