@@ -71,7 +71,7 @@ void EventManager::handleEvent(const int& eventIdx) {
 			int clientSocket;
 			try {
 				clientSocket = sm->acceptClient(curEvent->ident);
-				if (clientSocket == -1) { //accept()를 실패해서 클라이언트 소켓 할당도 안된 경우
+				if (clientSocket == -1) {//accept()를 실패해서 클라이언트 소켓 할당도 안된 경우
 					Utils::log("accept() Failed", YELLOW);
 					return ;
 				}
@@ -80,42 +80,32 @@ void EventManager::handleEvent(const int& eventIdx) {
 			} catch (StatusCode& errCode) {
 				//accept는 성공했는데 다른 문제가 발생한 경우 -> 즉시 에러 리스폰스 만든다.
 				Utils::log("accept() Successed But Something went wrong", YELLOW);
-				// Response*	errResponse = new Response(errCode); 에러코드로 바로 만드는것 추가해야할 듯
-				// Response*	errResponse = new Response(errCode, client->getServer().getServerConfig().getPort());
-				// changeEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, errResponse);//? 바꿔야할듯 쓰기로
 			}
 		} else if (curEvent->udata == NULL) {
 			// 클라이언트의 처리 상태에 따라 이벤트 처리
 			Utils::log("Client[READ]: " + Utils::intToString(curEvent->ident) + ": Parsing", GREEN);
-			Request* request = client->getRequest();// NULL 이면 할당해서 주기
+			Request* request = client->getRequest();
 			request->parseRequest();
 			if (request->getStatus() == PARSE_DONE || request->getStatusCode().getStatusCode() >= 400) {
 				Utils::log("Client[READ]: " + Utils::intToString(curEvent->ident) + ": " +
 				(request->getStatus() == PARSE_DONE ? "Parse Done" : "Parse Error: " + request->getStatusCode().getMessage()), YELLOW);
-				// changeEvent(curEvent, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-				// changeEvent(curEvent->ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, request);
 				changeEvent(curEvent->ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 				changeEvent(curEvent->ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, request);
 			}
 		}
 	} else if (curEvent->filter ==  EVFILT_WRITE) {// 쓰기
-		if (client->getResponse() == NULL) {// udata -> Request
+		if (client->getResponse() == NULL) {
 			Utils::log("Client[WRITE]: " + Utils::intToString(curEvent->ident) + ": Handle Request Start", GREEN);
 			Request* request = (Request *)curEvent->udata;
-			RequestHandler requestHandler = RequestHandler(request, client);// 새로 생성하는 거 수정 가능할 지도
+			RequestHandler requestHandler = RequestHandler(request, client);
 			ResponseBody* responseBody = requestHandler.handleRequest();
-			if (responseBody != NULL) {// cgi 아니라면
+			if (responseBody != NULL) {
 				Utils::log("Client[WRITE]: " + Utils::intToString(curEvent->ident) + ": Response Created: " +
 				responseBody->getStatusCode().getMessage(), GREEN);
 				Response* response= new Response(responseBody);
-				// if (responseBody->getStatusCode().getStatusCode() >= 400) {
-				// 	response = new Response(responseBody->getStatusCode(), client->getServer().getServerConfig().getPort());
-				// } else {
-				// 	response = new Response(responseBody);
-				// }
 				client->setResponse(response);
 			}
-		} else {//client->getResponse() != NULL
+		} else {
 			Utils::log("Client[WRITE]: " + Utils::intToString(curEvent->ident) + ": Writing", GREEN);
 			Response* response = client->getResponse();
 			response->writeToSocket(curEvent->ident);

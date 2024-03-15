@@ -16,7 +16,6 @@ ParseConfig::ParseConfig(const char* configFileName) : charset("{};"), globalBlo
 	}
 	checkBlocksWrong();
 	setServerConfigs();
-	//printAllBlocks();
 }
 
 /*config 파일 읽고 lawlines에 저장*/

@@ -41,7 +41,7 @@ class Config {
 		void	setByBlock(Block& Block_);
 		
 		/* Getter */
-		const EConfigType	getType() const;
+		const EConfigType&	getType() const;
 		const int&	getPort() const;
 		const string&	getServerName() const;
 		const string&	getRoot() const;

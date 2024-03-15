@@ -35,6 +35,4 @@ int main(int argc, char** argv) {
 			em->handleEvent(i);
 		}
 	}
-	delete sm;
-	delete em;
 }

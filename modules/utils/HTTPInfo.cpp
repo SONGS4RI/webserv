@@ -33,9 +33,8 @@ void HTTPInfo::isValidHeaderField(map<string, string>& properties) {
 	string contentLength = properties[CONTENT_LENGTH];
 	string transferEncoding = properties[TRANSFER_ENCODING];
 	string boundary = properties[BOUNDARY];
-	string host = properties[HOST];// 호스트 체크 해줘야함
 
-	for (size_t i = 0; i < contentLength.size() && contentType == POST; i++) {// content-length 없을지도??
+	for (size_t i = 0; i < contentLength.size() && contentType == POST; i++) {
 		if (!isnumber(contentLength[i])) {
 			throw StatusCode(400, string(BAD_REQUEST) + ": isValidHeaderField 1");
 		}

@@ -28,7 +28,7 @@ class Request {
 		ERequestStatus status;
 		StatusCode statusCode;
 		istringstream readbuf;
-		bool isUrlIndex;
+		string index;
 	public:
 		Request();
 		Request(const Client* client);
@@ -49,7 +49,7 @@ class Request {
 		const map<string, string>& getProperties() const;
 		RequestBody* getBody() const;
 		const StatusCode& getStatusCode() const;
-		const bool& getIsUrlIndex() const;
+		const string& getIndex() const;
 };
 
 #endif
